@@ -1,0 +1,61 @@
+/* TABLE RESET - MAY USE THIS LATER
+table, caption, tbody, tfoot, thead, tr, th, td {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+*/
+
+body {
+  font-family: 'Roboto', serif;
+  font-size: 16px;
+}
+
+table {
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-bottom: 2px solid #5B855E;
+}
+
+td, th {
+  border: thin solid white;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+td.centre-align {
+  text-align: center;
+}
+
+th {
+  background-color: #5B855E;
+}
+
+.th-sort-asc::after {
+  content: "\25b4";
+  margin-left: 5px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.th-sort-desc::after {
+  content: "\25be";
+  margin-left: 5px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+tr:nth-child(even) {
+  background: #F5F5F5;
+}
+
+tr:nth-child(odd) {
+  background: #E0E0E1;
+}
+
+tr:hover {
+  background-color: #D1DFCD;
+}
