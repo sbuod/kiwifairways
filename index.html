@@ -1,92 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kiwi Fairways</title>
-  <meta name="description" content="Your guide to golf in beautiful New Zealand / Aotearoa">
-  <meta name="author" content="Kiwi Fairways">
-
-  <!-- Following meta tags use the Open Graph protocal (https://ogp.me/) to improve appearance of the web page when it’s linked in social media posts -->
-  <meta property="og:title" content="Kiwi Fairways">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.kiwifairways.com">
-  <meta property="og:description" content="Your guide to golf in beautiful New Zealand / Aotearoa">
-  <!-- Populate this later when we have an image -
-    <meta property="og:image" content="image.png">
-   -->
-
-  <!-- Populate the following favicons later
-    <link rel="icon" href="/favicon.ico">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  -->
-  <link rel="stylesheet" href="css/styles.css?v=1.0">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+	<title>Display Google Sheet in Table</title>
+	<style>
+		table, th, td {
+			border: 1px solid black;
+			border-collapse: collapse;
+			padding: 5px;
+		}
+	</style>
 </head>
 <body>
+	<table id="myTable"></table>
 
-      <table class="table table-sortable">
-    <thead>
-      <tr>
-        <th>Region</th>
-        <th>Course Name</th>
-        <th># Members</th>
-        <th>Website</th>
-        <th>Holes</th>
-        <th>Slope</th>
-        <th>Green Fee</th>
-        <th>Notes</th>
-        <th>Last Updated</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Canterbury</td>
-        <td>Avondale Testing</td>
-        <td class="centre-align">619</td>
-        <td>avondalegolfclub.co.nz</td>
-        <td class="centre-align">18</td>
-        <td class="centre-align">115</td>
-        <td class="centre-align">25</td>
-        <td>-</td>
-        <td class="centre-align">03 Jan 2021</td>
-      </tr>
-      <tr>
-        <td>Canterbury</td>
-        <td>Bottle Lake</td>
-        <td class="centre-align">408</td>
-        <td>bottlelakegolf.co.nz</td>
-        <td class="centre-align">18</td>
-        <td class="centre-align">114</td>
-        <td class="centre-align">35</td>
-        <td>-</td>
-        <td class="centre-align">03 Jan 2021</td>
-      </tr>
-      <tr>
-        <td>Canterbury</td>
-        <td>Waimairi Breach</td>
-        <td class="centre-align">792</td>
-        <td>waimairibeachgolf.co.nz</td>
-        <td class="centre-align">18</td>
-        <td class="centre-align">110</td>
-        <td class="centre-align">65</td>
-        <td>-</td>
-        <td class="centre-align">03 Jan 2021</td>
-      </tr>
-      <tr>
-        <td>Canterbury</td>
-        <td>Christchurch</td>
-        <td class="centre-align">513</td>
-        <td>www.waitikirigolf.co.nz</td>
-        <td class="centre-align">18</td>
-        <td class="centre-align">120</td>
-        <td class="centre-align">60</td>
-        <td>-</td>
-        <td class="centre-align">03 Jan 2021</td>
-      </tr>
-    </tbody>
-  </table>
-  <a href="testing.html">Testing</a>
-  <script src="js/tablesort.js"></script>
+	<script>
+		// Replace the sheet ID and API key with your own values
+		const sheetId = '1fMXuc1NynI3IncXzPLefj2OETDnF0NGAVKqIojP-GlY';
+		const apiKey = 'YAIzaSyA54V9Ype7Gkw71MfEVMEYjjdkJKF0w2ac';
+
+		// URL of the Google Sheets API endpoint to fetch the data
+		const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?key=${apiKey}`;
+
+		// Fetch the data from the Google Sheets API
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				// Create the HTML table
+				const table = document.getElementById('myTable');
+				const headers = data.values.shift();
+				const headerRow = document.createElement('tr');
+				headers.forEach(header => {
+					const th = document.createElement('th');
+					th.textContent = header;
+					headerRow.appendChild(th);
+				});
+				table.appendChild(headerRow);
+				data.values.forEach(row => {
+					const tr = document.createElement('tr');
+					row.forEach(cell => {
+						const td = document.createElement('td');
+						td.textContent = cell;
+						tr.appendChild(td);
+					});
+					table.appendChild(tr);
+				});
+			})
+			.catch(error => console.error(error));
+	</script>
 </body>
+</html>
