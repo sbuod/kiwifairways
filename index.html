@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Display Google Sheet in Table</title>
+	<title>Kiwi Fairways</title>
 	<style>
 		table, th, td {
 			border: 1px solid black;
@@ -32,6 +32,7 @@
 				headers.forEach(header => {
 					const th = document.createElement('th');
 					th.textContent = header;
+					//console.log(header);
 					headerRow.appendChild(th);
 				});
 				table.appendChild(headerRow);
