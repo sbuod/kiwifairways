@@ -8,17 +8,36 @@ table, caption, tbody, tfoot, thead, tr, th, td {
   vertical-align: baseline;
 }*/
 
+/* Import Inter from Google Fonts */
+@import url('https://fonts.googleapis.com/css?family=Inter');
+
 body {
   background-color: #F5F5f5;
+  font-family: 'Inter', sans-serif;
 }
 
-table, th, td {
-  border: 1px solid black;
+table {
+  background-color: white;
+  width: 80%;
+  margin: 0% auto;
   border-collapse: collapse;
-  border-radius: 10px;
+  border-radius: 30px;
   overflow: hidden;
-  padding: 5px;
+ 
 }
+
+td, th {
+  padding: 10px;
+  border: 1px solid lightgray;
+}
+
+th {
+  background-color: #134611;
+  color: white;
+  font-size: 80%;
+}
+
+
 
 /*th:first-of-type {
   border-top-left-radius: 10px;
