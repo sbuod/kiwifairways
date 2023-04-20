@@ -8,10 +8,34 @@ table, caption, tbody, tfoot, thead, tr, th, td {
   vertical-align: baseline;
 }*/
 
-table, th, td {
+body {
+  background-color: #F5F5f5;
+}
+
+/*table, th, td {
   border: 1px solid black;
   border-collapse: collapse;
   padding: 5px;
+}*/
+
+table {
+  border-collapse:separate;
+  border:solid black 1px;
+  border-radius:6px;
+}
+
+td, th {
+  border-left:solid black 1px;
+  border-top:solid black 1px;
+}
+
+th {
+  background-color: blue;
+  border-top: none;
+}
+
+td:first-child, th:first-child {
+   border-left: none;
 }
 
 /* SOME TABLE STYLING - MAY USE THIS LATER
