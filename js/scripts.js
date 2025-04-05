@@ -106,7 +106,7 @@ fetch(url)
       }, {});
     }
 
-    // Get the most recent row for each courseName based on "Last Updated"
+    // Get the most recent row for each courseName based on "Last Updated" column
     function getMostRecentRows(groupedRows) {
       const mostRecentRows = [];
       
