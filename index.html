@@ -6,9 +6,25 @@
 	<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-	<!-- Search input for filtering the table -->
-	<input type="text" id="search" placeholder="Filter course info..." />
-
+	
+	<!-- Filter Bar: Wraps all filtering controls together for consistent layout -->
+	<div class="filter-bar">
+		<!-- Search Input: Users can type to filter results -->
+		<input type="text" id="searchInput" placeholder="Search...">
+	
+		<!-- Region Filter: Dropdown populated dynamically with regions from the data -->
+		<select id="regionFilter">
+		<option value="">All Regions</option>
+		<!-- More options added dynamically in JS -->
+		</select>
+	
+		<!-- Holes Filter: Dropdown populated dynamically with holes (e.g., 9, 18) -->
+		<select id="holesFilter">
+		<option value="">All Holes</option>
+		<!-- More options added dynamically in JS -->
+		</select>
+	</div>
+  
 	<table id="myTable">
         <thead>
             <tr>
