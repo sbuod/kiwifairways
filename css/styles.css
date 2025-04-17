@@ -69,6 +69,46 @@ tr:hover {
   font-family: 'Inter', sans-serif;
 }
 
+/* ========== LOCATION INPUT WRAPPER ========== */
+/* Groups the location input and icon together visually */
+.location-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevents it from shrinking too much in wrap mode */
+}
+
+/* Location input: Full width, space left for the icon */
+#locationInput {
+  padding: 10px 35px 10px 10px; /* Right padding for icon */
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-family: 'Inter', sans-serif;
+  width: 200px;
+}
+
+/* Location icon styling: clickable, positioned inside the input wrapper */
+.location-icon {
+  position: absolute;
+  right: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  user-select: none;
+  color: #4CAF50;
+}
+
+/* Add a hover effect to the icon */
+.location-icon:hover {
+  color: #388e3c;
+}
+
+/* Hide the gps column */
+#myTable td:nth-child(12),
+#myTable th:nth-child(12) {
+  display: none;
+}
+
 /* ========== RESPONSIVE DESIGN ========== */
 @media only screen and (max-width: 600px) {
   table {
@@ -82,7 +122,16 @@ tr:hover {
   }
 
   .filter-bar input,
-  .filter-bar select {
+  .filter-bar select,
+  .location-input-wrapper {
     width: 90%; /* Fill most of the screen width */
   }
+
+  /* Ensure the location input itself expands in mobile view */
+  #locationInput {
+    width: 100%;
+  }
 }
+
+
+
