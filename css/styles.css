@@ -1,7 +1,7 @@
 /* ========== GENERAL STYLES ========== */
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #f0f0f0;
+  background-color: #DACEB7;
   margin: 0;
   padding: 0;
   display: flex; /* Use flexbox to center content */
@@ -14,6 +14,18 @@ body {
   max-width: 1500px;      /* Limit the container width */
   margin: 0 auto;         /* Center the container horizontally */
   padding: 20px;          /* Optional, adds some spacing inside the container */
+}
+
+/* Logo styling */
+.logo-container {
+  text-align: center;
+  padding: 0;
+  width: 100%;
+}
+
+.site-logo {
+  max-width: 250px; /* Adjust size as needed */
+  height: auto;
 }
 
 /* ========== TABLE STYLING ========== */
@@ -36,7 +48,7 @@ th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: #4CAF50;
+  background-color: #639F54;
   color: white;
   cursor: pointer;
 }
