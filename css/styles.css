@@ -9,6 +9,13 @@ body {
   align-items: center; /* Center elements horizontally */
 }
 
+.container {
+  width: 100%;            /* Make container take full available width */
+  max-width: 1500px;      /* Limit the container width */
+  margin: 0 auto;         /* Center the container horizontally */
+  padding: 20px;          /* Optional, adds some spacing inside the container */
+}
+
 /* ========== TABLE STYLING ========== */
 table {
   width: 100%;
@@ -56,7 +63,6 @@ tr:hover {
   flex-wrap: wrap; /* Wrap items on smaller screens */
   margin: 20px 0;
   width: 100%;
-  max-width: 800px;
 }
 
 /* Applies to both input and select dropdowns */
@@ -85,7 +91,7 @@ tr:hover {
   border-radius: 5px;
   border: 1px solid #ccc;
   font-family: 'Inter', sans-serif;
-  width: 200px;
+  width: 400px;
 }
 
 /* Location icon styling: clickable, positioned inside the input wrapper */
@@ -107,6 +113,23 @@ tr:hover {
 #myTable td:nth-child(12),
 #myTable th:nth-child(12) {
   display: none;
+}
+
+/* ========== TABLE FOOTER (ROW COUNT) ========== */
+.table-footer {
+  width: 100%;            /* Make it span full width */
+  max-width: 1200px;      /* Match table width if needed */
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #444;
+  padding-left: 10px;
+  padding-bottom: 20px;
+}
+
+.row-count {
+  text-align: left;
 }
 
 /* ========== RESPONSIVE DESIGN ========== */
@@ -132,6 +155,3 @@ tr:hover {
     width: 100%;
   }
 }
-
-
-

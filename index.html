@@ -1,15 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">	
-  
   <title>Kiwi Fairways | Your guide to golf in beautiful Aotearoa / New Zealand</title>
+
   <meta name="description" content="Discover golf courses across New Zealand. Compare green fees, membership costs, course info and more with Kiwi Fairways." />
   <meta name="robots" content="index, follow">
-  <link rel="stylesheet" href="css/styles.css">
-
-  <!-- Canonical URL -->
   <link rel="canonical" href="https://kiwifairways.nz">
 
   <!-- Favicon -->
@@ -19,7 +16,6 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="Kiwi Fairways" />
   <link rel="manifest" href="/site.webmanifest" />
-</head>
 
   <!-- Open Graph (Facebook, LinkedIn, etc.) -->
   <meta property="og:title" content="Kiwi Fairways | Your guide to golf in New Zealand">
@@ -34,69 +30,72 @@
   <meta name="twitter:description" content="Your ultimate golf course guide for New Zealand.">
   <meta name="twitter:image" content="https://kiwifairways.nz/images/share-image.jpg">
 
-  <!-- Stylesheets. Photon CSS (optional, for styling suggestion dropdowns) -->
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css">
-  <link rel="canonical" href="https://kiwifairways.nz" />
+</head>
 
 <body>
+  <!-- Wrapper div for table and row count -->
+  <div class="container">	
 
-  <!-- Filter Bar: Wraps all filtering controls together for consistent layout -->
-  <div class="filter-bar">
-    <!-- Search Input: Users can type to filter results -->
-    <input type="text" id="searchInput" placeholder="Search...">
+	<!-- Filter Bar -->
+	<div class="filter-bar">
+		
+		<select id="regionFilter">
+		<option value="">All Regions</option>
+		</select>
 
-    <!-- Region Filter: Dropdown populated dynamically with regions from the data -->
-    <select id="regionFilter">
-      <option value="">All Regions</option>
-      <!-- More options added dynamically in JS -->
-    </select>
+		<select id="holesFilter">
+		<option value="">All Holes</option>
+		</select>
 
-    <!-- Holes Filter: Dropdown populated dynamically with holes (e.g., 9, 18) -->
-    <select id="holesFilter">
-      <option value="">All Holes</option>
-      <!-- More options added dynamically in JS -->
-    </select>
+		<input type="text" id="searchInput" placeholder="Search...">
 
-    <!-- Location Filter: Users can type or detect their current location -->
-    <div class="location-input-wrapper">
-      <!-- Location Input: Autocomplete using Photon API -->
-      <input type="text" id="locationInput" placeholder="Sort by distance…" autocomplete="off">
-	  <div id="locationSuggestions" class="autocomplete-suggestions"></div>
-      <!-- Location Icon: Triggers geolocation -->
-      <span class="location-icon" id="detectLocation" title="Use my location">&#x1F4CD;</span>
-    </div>
+		<div class="location-input-wrapper">
+		<input type="text" id="locationInput" placeholder="Sort by distance…" autocomplete="off">
+		<div id="locationSuggestions" class="autocomplete-suggestions"></div>
+		<span class="location-icon" id="detectLocation" title="Use my location">&#x1F4CD;</span>
+		</div>
+	</div>
+	
+	<!-- Data Table -->
+	<table id="myTable">
+		<thead>
+		<tr>
+			<th class="sortable" data-column="region">Region</th>
+			<th class="sortable" data-column="courseName">Course Name</th>
+			<th class="sortable" data-column="holes">Holes</th>
+			<th class="sortable" data-column="slope">Slope</th>
+			<th class="sortable" data-column="website">Website</th>
+			<th class="sortable" data-column="gf">GF</th>
+			<th class="sortable" data-column="gfAffiliated">GF (Affiliated)</th>
+			<th class="sortable" data-column="membership">Membership</th>
+			<th class="sortable" data-column="members">Members</th>
+			<th class="sortable" data-column="notes">Notes</th>
+			<th class="sortable" data-column="lastUpdated">Last Updated</th>
+			<th class="sortable" data-column="gps">Location</th>
+			<th id="distanceHeader" style="display:none;">Distance</th>
+		</tr>
+		</thead>
+		<tbody>
+		<!-- Dynamic rows added by JS -->
+		</tbody>
+	</table>
+
+	<!-- Row Count (Bottom Left) -->
+	<div class="table-footer">
+		<div id="rowCount" class="row-count">Showing 0 of 0 courses</div>
+	</div>
   </div>
 
-  <!-- Data Table -->
-  <table id="myTable">
-    <thead>
-      <tr>
-        <th class="sortable" data-column="region">Region</th>
-        <th class="sortable" data-column="courseName">Course Name</th>
-        <th class="sortable" data-column="holes">Holes</th>
-        <th class="sortable" data-column="slope">Slope</th>
-        <th class="sortable" data-column="website">Website</th>
-        <th class="sortable" data-column="gf">GF</th>
-        <th class="sortable" data-column="gfAffiliated">GF (Affiliated)</th>
-        <th class="sortable" data-column="membership">Membership</th>
-        <th class="sortable" data-column="members">Members</th>
-        <th class="sortable" data-column="notes">Notes</th>
-        <th class="sortable" data-column="lastUpdated">Last Updated</th>
-        <th class="sortable" data-column="gps">Location</th>
-		<th id="distanceHeader" style="display:none;">Distance</th> <!-- New Distance Column -->
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Rows will be dynamically added here -->
-    </tbody>
-  </table>
-
-  <!-- Photon Autocomplete: Load Photon JS -->
+  <!-- Photon & Leaflet JS -->
   <script src="https://unpkg.com/@mapbox/mapbox-sdk/umd/mapbox-sdk.min.js"></script>
   <script src="https://unpkg.com/leaflet"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
   <!-- Your Custom Script -->
   <script src="js/scripts.js"></script>
+
 </body>
 </html>

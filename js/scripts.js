@@ -62,6 +62,10 @@ function renderTable(rows) {
     });
     tableHeadRow.appendChild(th);
   }
+
+  // Keep track of total and visible rows
+  let totalRowsCount = rows.length;
+  let visibleCowsCount = 0;
   
   rows.forEach(row => {
     const tr = document.createElement('tr'); // Create a new table row
@@ -84,7 +88,6 @@ function renderTable(rows) {
     });
 
     // Add the distance column if user's location is available
-    console.log(userLat, userLng)
     if (userLat && userLng) {
       const gpsCell = row[11]; // Get GPS data from 12 th column of Google sheet
       console.log("GPS Cell:", gpsCell);
@@ -103,6 +106,7 @@ function renderTable(rows) {
 
   // Re-apply filtering and distance calculation after rendering
   filterTable(); // Apply filtering to the table
+
 }
 
 // =======================
@@ -184,6 +188,9 @@ function filterTable() {
   const selectedHoles = document.getElementById('holesFilter').value;
 
   const rows = document.querySelectorAll('#myTable tbody tr');
+  let visibleRowsCount = 0;
+  const totalRowsCount = rows.length;
+  
 
   rows.forEach(row => {
     const cells = Array.from(row.querySelectorAll('td'));
@@ -195,7 +202,10 @@ function filterTable() {
     const matchesRegion = !selectedRegion || region === selectedRegion;
     const matchesHoles = !selectedHoles || holes === selectedHoles;
 
+    const shouldShow = matchesSearch && matchesRegion && matchesHoles;
+
     row.style.display = (matchesSearch && matchesRegion && matchesHoles) ? '' : 'none';
+    if (shouldShow) visibleRowsCount++;
   });
 
   // Recalculate distances for filtered rows after search
@@ -217,6 +227,11 @@ function filterTable() {
         distanceCell.textContent = `${distance} km`;
       }
     });
+  }
+  // Update the visible row count
+  const rowCountDisplay = document.getElementById('rowCount');
+  if (rowCountDisplay) {
+    rowCountDisplay.innerText = `Showing ${visibleRowsCount} of ${totalRowsCount} courses`;
   }
 }
 
@@ -443,44 +458,49 @@ function getDistance(lat1, lng1, lat2, lng2) {
 
 // Detect user location when the 📍 icon is clicked
 document.getElementById('detectLocation').addEventListener('click', () => {
-  if (!navigator.geolocation) {
-    alert('Geolocation is not supported by your browser.');
-    return;
-  }
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        console.log("Location detected:", lat, lng);
 
-  // Attempt to get the user's current position
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      userLat = position.coords.latitude;
-      userLng = position.coords.longitude;
-      console.log("Location detected:", userLat, userLng);
- 
-      // Automatically update the location input field
-      const locationInput = document.getElementById('locationInput');
-      locationInput.value = 'My Location';
+        // Update the location input field
+        document.getElementById('locationInput').value = 'My Location';
 
-      // Make sure the Distance column is visible
-      const distanceHeader = document.getElementById('distanceHeader');
-      if (distanceHeader) {
-        distanceHeader.style.display = '';
+        // Make sure the Distance column is visible
+        const distanceHeader = document.getElementById('distanceHeader');
+        if (distanceHeader) {
+          distanceHeader.style.display = '';
+        }
+
+        // Now call the dedicated handler
+        handleLocationChange(lat, lng);
+      },
+      (error) => {
+        console.error('Geolocation error:', error.message);
+        alert('Unable to retrieve your location.');
       }
-
-      // Re-render the table with updated distances
-      //filterTable();
-      // Force re-render of table with distances
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          const rows = data.values.slice(1);
-          const groupedRows = groupByCourseName(rows);
-          const mostRecentRows = getMostRecentRows(groupedRows);
-          renderTable(mostRecentRows);
-        });
-    },
-    (error) => {
-      console.error('Geolocation error:', error.message);
-      alert('Unable to retrieve your location.');
-    }
-  );
+    );
+  } else {
+    alert('Geolocation is not supported by your browser.');
+  }
 });
+
+
+// Trigger sort by distance and re-render when location changes
+function handleLocationChange(lat, lng) {
+  userLat = lat;
+  userLng = lng;
+
+  // Re-fetch and re-render the table with updated distances
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      const rows = data.values.slice(1);
+      const groupedRows = groupByCourseName(rows);
+      const mostRecentRows = getMostRecentRows(groupedRows);
+      renderTable(mostRecentRows);
+    });
+}
 
