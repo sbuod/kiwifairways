@@ -16,6 +16,7 @@ let userLng = null;
 // =======================
 // FETCH & RENDER DATA
 // =======================
+
 fetch(url)
   .then(response => response.json()) // Fetch the data from Google Sheets API
   .then(data => {
@@ -43,7 +44,7 @@ function renderTable(rows) {
   // Add "Distance" column header if user's location is known
   const tableHeadRow = document.querySelector('#myTable thead tr');
   const existingDistanceHeader = document.getElementById('distanceHeader');
-  console.log("Before distance calc - userLat:", userLat, "userLng:", userLng);
+  console.log(`Determining if distance column should be displayed (userLat: ${userLat}, userLng: ${userLng})`);
   
   if (userLat && userLng && !existingDistanceHeader)   {
     const th = document.createElement('th');
@@ -89,13 +90,11 @@ function renderTable(rows) {
 
     // Add the distance column if user's location is available
     if (userLat && userLng) {
-      const gpsCell = row[11]; // Get GPS data from 12 th column of Google sheet
-      console.log("GPS Cell:", gpsCell);
-      
+      const gpsCell = row[11]; // Get GPS data from 12 th column of Google sheet    
       const [lat, lng] = gpsCell.split(',').map(Number); // Parse latitude and longitude
       const distance = getDistance(userLat, userLng, lat, lng).toFixed(2); // Calculate distance
-
       const distanceCell = document.createElement('td');
+
       distanceCell.textContent = `${distance} km`; // Display distance in km
       distanceCell.classList.add('distance-cell'); // Add a class for easier identification
       tr.appendChild(distanceCell); // Add distance cell to row
@@ -269,7 +268,7 @@ function addEventListeners() {
 function getColumnIndex(column) {
   console.log("getColumnIndex()"); 
   if (column === 'distance') {
-    // Return the last column index dynamically
+    // Return the last column index 
     const headerCount = document.querySelectorAll('#myTable thead th').length;
     return headerCount;
   }
@@ -292,9 +291,9 @@ function getColumnIndex(column) {
 
 // Generic table sorter
 function sortTable(column) {
-  console.log("sortTable()"); 
-  console.log("sortTable() called with column:", column); 
-  console.log("Current sort order:", currentSortOrder);
+  console.log(`sortTable() by '${column}' column, ${currentSortOrder}`);
+
+
   const rows = Array.from(document.querySelectorAll('#myTable tbody tr'));
 
   const sortedRows = rows.sort((a, b) => {
@@ -402,6 +401,62 @@ function setupLocationAutocomplete() {
 }
 
 // =======================
+// GEOLOCATION HANDLER
+// =======================
+
+// Detect user location when the 📍 icon is clicked
+document.getElementById('detectLocation').addEventListener('click', () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        console.log("Location detected successfully:", lat, lng);
+
+        // Update global variables
+        userLat = lat;
+        userLng = lng;
+
+        // Update the location input field
+        document.getElementById('locationInput').value = 'My Location';
+
+        // Make sure the Distance column is visible
+        const distanceHeader = document.getElementById('distanceHeader');
+        if (distanceHeader) {
+          distanceHeader.style.display = '';
+        }
+
+        // Now call the dedicated handler
+        handleLocationChange(lat, lng);
+      },
+      (error) => {
+        console.error('Geolocation error:', error.message);
+        alert('Unable to retrieve your location.');
+      }
+    );
+  } else {
+    alert('Geolocation is not supported by your browser.');
+  }
+});
+
+
+// Trigger sort by distance and re-render when location changes
+function handleLocationChange(lat, lng) {
+  userLat = lat;
+  userLng = lng;
+
+  // Re-fetch and re-render the table with updated distances
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      const rows = data.values.slice(1);
+      const groupedRows = groupByCourseName(rows);
+      const mostRecentRows = getMostRecentRows(groupedRows);
+      renderTable(mostRecentRows);
+    });
+}
+
+// =======================
 // DISTANCE SORTING
 // =======================
 
@@ -450,57 +505,5 @@ function getDistance(lat1, lng1, lat2, lng2) {
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in km
-}
-
-// =======================
-// GEOLOCATION HANDLER
-// =======================
-
-// Detect user location when the 📍 icon is clicked
-document.getElementById('detectLocation').addEventListener('click', () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        console.log("Location detected:", lat, lng);
-
-        // Update the location input field
-        document.getElementById('locationInput').value = 'My Location';
-
-        // Make sure the Distance column is visible
-        const distanceHeader = document.getElementById('distanceHeader');
-        if (distanceHeader) {
-          distanceHeader.style.display = '';
-        }
-
-        // Now call the dedicated handler
-        handleLocationChange(lat, lng);
-      },
-      (error) => {
-        console.error('Geolocation error:', error.message);
-        alert('Unable to retrieve your location.');
-      }
-    );
-  } else {
-    alert('Geolocation is not supported by your browser.');
-  }
-});
-
-
-// Trigger sort by distance and re-render when location changes
-function handleLocationChange(lat, lng) {
-  userLat = lat;
-  userLng = lng;
-
-  // Re-fetch and re-render the table with updated distances
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      const rows = data.values.slice(1);
-      const groupedRows = groupByCourseName(rows);
-      const mostRecentRows = getMostRecentRows(groupedRows);
-      renderTable(mostRecentRows);
-    });
 }
 
