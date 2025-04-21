@@ -1,42 +1,80 @@
-// =======================
 // CONFIGURATION
-// =======================
 const sheetId = '1fMXuc1NynI3IncXzPLefj2OETDnF0NGAVKqIojP-GlY'; // Google Sheets ID
 const apiKey = 'AIzaSyA54V9Ype7Gkw71MfEVMEYjjdkJKF0w2ac'; // Google Sheets API Key
 const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?key=${apiKey}`; // API URL
 
-// Sorting state
-let currentSortColumn = null;
-let currentSortOrder = 'asc';
+const inputLocation = document.getElementById('locationInput');
+const detectLocation = document.getElementById('detectLocation');
+const mostRecentRows = []
 
-// User's location (for distance calculation)
-let userLat = null;
-let userLng = null;
+let currentSortColumn = null; // Sorting column
+let currentSortOrder = 'asc'; // Sorting order
+let userLat = null; // User-provided latitude
+let userLong = null; // User-provided longitude
 
-// =======================
-// FETCH & RENDER DATA
-// =======================
+// DOM INITIALISATION
+document.addEventListener('DOMContentLoaded', async () => {  
+  console.log("On the tee - kiwifairways.co.nz 🏌️‍♂️🏌️‍♀️");
+  
+  const courseData = await fetchCourseData(); // Wait for course data before proceeding
+  renderCourseData(courseData); // Display the course data
+  populateFilters(mostRecentRows); // Populate dropdown filters for regions and holes
+  addEventListeners(); // Add event listeners for sorting and filtering
+  
+  locationIcon.addEventListener('click', handleLocationIcon); // Detect user location when the 📍 icon is clicked
 
-fetch(url)
-  .then(response => response.json()) // Fetch the data from Google Sheets API
-  .then(data => {
-    const headers = data.values[0]; // First row as headers
-    const rows = data.values.slice(1); // Data rows excluding headers
-    const groupedRows = groupByCourseName(rows); // Group rows by course name
-    const mostRecentRows = getMostRecentRows(groupedRows); // Get most recent rows for each course
+});
 
-    renderTable(mostRecentRows); // Render the table with the data
-    populateFilters(mostRecentRows); // Populate dropdown filters for regions and holes
-    addEventListeners(); // Add event listeners for sorting and filtering
-  })
-  .catch(error => console.error('Error fetching data:', error));
+// FETCH COURSE DATA
+function fetchCourseData() {
+  console.log("fetchCourseData()");
+  return fetch(url)
+    .then(response => response.json()) // Fetch the data from Google Sheets API
+    .then(data => {
+      const headers = data.values[0]; // Use the first row as headers
+      const rows = data.values.slice(1); // Use the rest of the rows for data
+      const groupedRows = groupByCourseName(rows); // Group rows by course name
+      const mostRecentRows = getMostRecentRows(groupedRows); // Get most recent rows for each course
+      courseData = mostRecentRows; // Store in global variable
+      return mostRecentRows;
+    })
+    .catch(error => {
+      console.error(`Error fetching course data: ${error}`);
+      return []; // Return empty array in case of error
+    });
+}
 
-// =======================
-// RENDER TABLE ROWS
-// =======================
-function renderTable(rows) {
-  console.log("renderTable()");  
-  console.log("Rendering table with userLat:", userLat, "userLng:", userLng);
+// GROUP ROWS BY CORSE NAME
+function groupByCourseName(rows) {
+  console.log("groupByCourseName()"); 
+  return rows.reduce((acc, row) => {
+    const courseName = row[1]; // Column index for course name
+    if (!acc[courseName]) acc[courseName] = [];
+    acc[courseName].push(row);
+    return acc;
+  }, {});
+}
+
+// GET THE MOST RECENT ROW FOR EACH COURSE
+function getMostRecentRows(groupedRows) {
+  console.log("getMostRecentRows()"); 
+  for (const courseName in groupedRows) {
+    const rows = groupedRows[courseName];
+    const mostRecentRow = rows.reduce((latestRow, currentRow) => {
+      const latestDate = parseDate(latestRow[10]); // 'lastUpdated' column
+      const currentDate = parseDate(currentRow[10]);
+      return currentDate > latestDate ? currentRow : latestRow;
+    });
+
+    mostRecentRows.push(mostRecentRow);
+  }
+  return mostRecentRows;
+}
+
+// RENDER COURSE DATA
+function renderCourseData(rows) {
+  console.log("renderCourseData()");  
+  console.log(`Rendering table with userLat: ${userLat}, userLng: ${userLong})`);
 
   const tableBody = document.querySelector('#myTable tbody');
   tableBody.innerHTML = ''; // Clear existing rows
@@ -44,15 +82,22 @@ function renderTable(rows) {
   // Add "Distance" column header if user's location is known
   const tableHeadRow = document.querySelector('#myTable thead tr');
   const existingDistanceHeader = document.getElementById('distanceHeader');
-  console.log(`Determining if distance column should be displayed (userLat: ${userLat}, userLng: ${userLng})`);
   
-  if (userLat && userLng && !existingDistanceHeader)   {
+  console.log(`Determining if distance column should be displayed (userLat: ${userLat}, userLng: ${userLong})`);
+  
+  // Only remove existing distance header if we don't have location data
+  if (!userLat || !userLong) {
+    if (existingDistanceHeader) {
+      existingDistanceHeader.remove();
+    }
+  } else if (!existingDistanceHeader) {
+    // If we have location data but no header yet, create it
     const th = document.createElement('th');
     th.textContent = 'Distance';
     th.id = 'distanceHeader';
     th.classList.add('sortable');
     th.dataset.column = 'distance';
-    th.addEventListener('click', () => { // Add click handler directly
+    th.addEventListener('click', () => { // Add click handler for sorting
       if (currentSortColumn === 'distance') {
         currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
       } else {
@@ -63,14 +108,16 @@ function renderTable(rows) {
     });
     tableHeadRow.appendChild(th);
   }
-
+  
   // Keep track of total and visible rows
   let totalRowsCount = rows.length;
-  let visibleCowsCount = 0;
+  let visibleRowsCount = 0;
   
+  // Render each row
   rows.forEach(row => {
     const tr = document.createElement('tr'); // Create a new table row
 
+    // Add normal cells from the data
     row.forEach((cell, i) => {
       const td = document.createElement('td'); // Create a table data cell
 
@@ -88,72 +135,52 @@ function renderTable(rows) {
       tr.appendChild(td); // Add cell to row
     });
 
-    // Add the distance column if user's location is available
-    if (userLat && userLng) {
-      const gpsCell = row[11]; // Get GPS data from 12 th column of Google sheet    
-      const [lat, lng] = gpsCell.split(',').map(Number); // Parse latitude and longitude
-      const distance = getDistance(userLat, userLng, lat, lng).toFixed(2); // Calculate distance
-      const distanceCell = document.createElement('td');
-
-      distanceCell.textContent = `${distance} km`; // Display distance in km
-      distanceCell.classList.add('distance-cell'); // Add a class for easier identification
-      tr.appendChild(distanceCell); // Add distance cell to row
+    // Add the distance column data if user's location is available
+    if (userLat && userLong) {
+      const gpsCell = row[11]; // Get GPS data from 12th column of Google sheet  
+      
+      if (gpsCell) { // Check that GPS data exists
+        const [lat, lng] = gpsCell.split(',').map(Number); // Parse latitude and longitude
+        
+        if (!isNaN(lat) && !isNaN(lng)) { // Make sure we have valid coordinates
+          const distance = getDistance(userLat, userLong, lat, lng).toFixed(2); // Calculate distance
+          const distanceCell = document.createElement('td');
+          distanceCell.textContent = `${distance} km`; // Display distance in km
+          distanceCell.classList.add('distance-cell'); // Add a class for easier identification
+          distanceCell.dataset.value = distance; // Add raw value for sorting
+          tr.appendChild(distanceCell); // Add distance cell to row
+        } else {
+          // Add empty cell if coordinates are invalid
+          const distanceCell = document.createElement('td');
+          distanceCell.textContent = 'N/A';
+          distanceCell.classList.add('distance-cell');
+          tr.appendChild(distanceCell);
+        }
+      } else {
+        // Add empty cell if no GPS data
+        const distanceCell = document.createElement('td');
+        distanceCell.textContent = 'N/A';
+        distanceCell.classList.add('distance-cell');
+        tr.appendChild(distanceCell);
+      }
     }
 
     tableBody.appendChild(tr); // Add row to table body
+    visibleRowsCount++;
   });
 
   // Re-apply filtering and distance calculation after rendering
   filterTable(); // Apply filtering to the table
-
 }
 
-// =======================
-// GROUP & FILTER LOGIC
-// =======================
-
-// Group rows by course name
-function groupByCourseName(rows) {
-  console.log("groupByCourseName()"); 
-  return rows.reduce((acc, row) => {
-    const courseName = row[1]; // Column index for course name
-    if (!acc[courseName]) acc[courseName] = [];
-    acc[courseName].push(row);
-    return acc;
-  }, {});
-}
-
-// Get the most recent row for each course
-function getMostRecentRows(groupedRows) {
-  console.log("getMostRecentRows()"); 
-  const mostRecentRows = [];
-
-  for (const courseName in groupedRows) {
-    const rows = groupedRows[courseName];
-    const mostRecentRow = rows.reduce((latestRow, currentRow) => {
-      const latestDate = parseDate(latestRow[10]); // 'lastUpdated' column
-      const currentDate = parseDate(currentRow[10]);
-      return currentDate > latestDate ? currentRow : latestRow;
-    });
-
-    mostRecentRows.push(mostRecentRow);
-  }
-
-  return mostRecentRows;
-}
-
-// Parse a date string safely
+// PARSE DATES
 function parseDate(dateString) {
-  console.log("parseDate()"); 
   const date = new Date(dateString);
   return isNaN(date) ? new Date(0) : date; // If invalid date, return epoch
 }
 
-// =======================
-// FILTERING
-// =======================
 
-// Populate dropdown filters
+// POPOULATE HOLES AND REGIONS FILTERS
 function populateFilters(rows) {
   console.log("populateFilters()"); 
   const uniqueRegions = new Set();
@@ -168,7 +195,7 @@ function populateFilters(rows) {
   populateFilter('holesFilter', uniqueHoles);   // Populate holes filter
 }
 
-// Helper to populate a dropdown
+// ???
 function populateFilter(selectId, values) {
   console.log("populateFilter()"); 
   const select = document.getElementById(selectId);
@@ -180,6 +207,7 @@ function populateFilter(selectId, values) {
   });
 }
 
+// FILTER THE TABLE WHEN REQUESTED
 function filterTable() {
   console.log("filterTable()"); 
   const searchValue = document.getElementById('searchInput').value.toLowerCase();
@@ -208,7 +236,7 @@ function filterTable() {
   });
 
   // Recalculate distances for filtered rows after search
-  if (userLat && userLng) {
+  if (userLat && userLong) {
     const filteredRows = Array.from(document.querySelectorAll('#myTable tbody tr')).filter(row => row.style.display !== 'none');
     filteredRows.forEach(row => {
       const gpsCell = row.querySelector('td:nth-child(13)');
@@ -234,12 +262,7 @@ function filterTable() {
   }
 }
 
-
-// =======================
-// COLUMN SORTING
-// =======================
-
-// Clickable headers for sorting
+// MAKE TABLE HEADERS CLICKABLE & TABLE SORTABLE
 function addEventListeners() {
   console.log("addEventListeners()"); 
   document.querySelectorAll('.sortable').forEach(th => {
@@ -264,7 +287,7 @@ function addEventListeners() {
   setupLocationAutocomplete(); // Set up location autocomplete feature
 }
 
-// Determine column index from name
+// DETERMINE COLUMN INDEX (NOT SURE WHY...)
 function getColumnIndex(column) {
   console.log("getColumnIndex()"); 
   if (column === 'distance') {
@@ -353,10 +376,7 @@ function sortTable(column) {
   tableBody.appendChild(fragment);
 }
 
-// =======================
 // LOCATION AUTOCOMPLETE (PHOTON)
-// =======================
-
 function setupLocationAutocomplete() {
   console.log("setupAutoComplete()"); 
   const input = document.getElementById('locationInput');
@@ -378,10 +398,27 @@ function setupLocationAutocomplete() {
       data.features.forEach(feature => {
         const name = feature.properties.name;
         const city = feature.properties.city || '';
-        const country = feature.properties.country || '';
-        const fullLabel = `${name}, ${city}, ${country}`;
+        
+        // Create label without the country part
+        let fullLabel;
+        if (city && city !== name) {
+          fullLabel = `${name}, ${city}`;
+        } else {
+          fullLabel = name;
+        }
+        
         const lat = feature.geometry.coordinates[1];
         const lng = feature.geometry.coordinates[0];
+
+        userLat = feature.geometry.coordinates[1];
+        userLong = feature.geometry.coordinates[0];   
+        
+        renderCourseData(mostRecentRows);
+
+        // Sort by distance immediately after rendering
+        currentSortColumn = 'distance';
+        currentSortOrder = 'asc'; // Shortest distance at top
+        sortTable('distance');
 
         const item = document.createElement('div');
         item.textContent = fullLabel;
@@ -389,7 +426,7 @@ function setupLocationAutocomplete() {
         item.addEventListener('click', () => {
           input.value = fullLabel; // Set input value to selected location
           suggestionBox.innerHTML = '';
-          sortCoursesByDistance(lat, lng); // Sort courses by proximity to selected location
+          //sortCoursesByDistance(lat, lng); // Sort courses by proximity to selected location
         });
 
         suggestionBox.appendChild(item); // Add suggestion to list
@@ -400,85 +437,76 @@ function setupLocationAutocomplete() {
   });
 }
 
-// =======================
-// GEOLOCATION HANDLER
-// =======================
+// HANDLE LOCATION ICON INTERACTION
+function handleLocationIcon() {
+  console.log("handleLocationIcon()"); 
+  if (locationIcon.innerHTML === '📍') { // Location pin clicked
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userLat = position.coords.latitude;
+          userLong = position.coords.longitude;
+          console.log(`User location detected successfully: ${userLat},${userLong}`);
 
-// Detect user location when the 📍 icon is clicked
-document.getElementById('detectLocation').addEventListener('click', () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        console.log("Location detected successfully:", lat, lng);
+          // Update the location input field
+          locationInput.value = 'My Location';
 
-        // Update global variables
-        userLat = lat;
-        userLng = lng;
+          // Change the location icon to a clear icon
+          locationIcon.innerHTML = '&#x274C;'; // ❌
 
-        // Update the location input field
-        document.getElementById('locationInput').value = 'My Location';
+          // Now call the dedicated handler
+          //handleLocationChange(userLat, userLong);
+          renderCourseData(mostRecentRows);
 
-        // Make sure the Distance column is visible
-        const distanceHeader = document.getElementById('distanceHeader');
-        if (distanceHeader) {
-          distanceHeader.style.display = '';
+          // Sort by distance immediately after rendering
+          currentSortColumn = 'distance';
+          currentSortOrder = 'asc'; // Shortest distance at top
+          sortTable('distance');
+
+        },
+        (error) => {
+          console.error('Geolocation error:', error.message);
+          alert('Unable to retrieve your location.');
         }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
 
-        // Now call the dedicated handler
-        handleLocationChange(lat, lng);
-      },
-      (error) => {
-        console.error('Geolocation error:', error.message);
-        alert('Unable to retrieve your location.');
-      }
-    );
-  } else {
-    alert('Geolocation is not supported by your browser.');
+  } else { // Cross (❌) clicked
+    
+    // Clear the users location
+    userLat = null;
+    userLong = null;
+
+    // Clear the location input field
+    locationInput.value = '';
+
+    // Change the icon back to location pin
+    locationIcon.innerHTML = '📍';
+
+    renderCourseData(mostRecentRows);
   }
-});
-
-
-// Trigger sort by distance and re-render when location changes
-function handleLocationChange(lat, lng) {
-  userLat = lat;
-  userLng = lng;
-
-  // Re-fetch and re-render the table with updated distances
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      const rows = data.values.slice(1);
-      const groupedRows = groupByCourseName(rows);
-      const mostRecentRows = getMostRecentRows(groupedRows);
-      renderTable(mostRecentRows);
-    });
-}
-
-// =======================
-// DISTANCE SORTING
-// =======================
+  
+};
 
 // Sort visible courses by proximity to given lat/lng
 function sortCoursesByDistance(userLat, userLng) {
   console.log("sortCoursesByDistance()"); 
-  
   const rows = Array.from(document.querySelectorAll('#myTable tbody tr'));
-
   const rowsWithDistance = rows.map(row => {
-    // Find the GPS cell (typically the cell before the last one if distance is present)
-    const cells = row.querySelectorAll('td');
-    const gpsCell = cells[cells.length - 2]; // Second-to-last cell is GPS when distance is present
+  // Find the GPS cell (typically the cell before the last one if distance is present)
+  const cells = row.querySelectorAll('td');
+  const gpsCell = cells[cells.length - 2]; // Second-to-last cell is GPS when distance is present
     
-    // Parse GPS coordinates
-    if (gpsCell && gpsCell.textContent.includes(',')) {
-      const [lat, lng] = gpsCell.textContent.trim().split(',').map(Number);
-      const distance = getDistance(userLat, userLng, lat, lng).toFixed(2);
-      return { row, distance: parseFloat(distance) };
-    }
+  // Parse GPS coordinates
+  if (gpsCell && gpsCell.textContent.includes(',')) {
+    const [lat, lng] = gpsCell.textContent.trim().split(',').map(Number);
+    const distance = getDistance(userLat, userLng, lat, lng).toFixed(2);
+    return { row, distance: parseFloat(distance) };
+  }
     
-    return { row, distance: Infinity }; // Handle rows without valid GPS data
+  return { row, distance: Infinity }; // Handle rows without valid GPS data
   });
 
   const sortedRows = rowsWithDistance.sort((a, b) => a.distance - b.distance);
@@ -492,7 +520,7 @@ function sortCoursesByDistance(userLat, userLng) {
   tableBody.appendChild(fragment);
 }
 
-// Haversine formula to calculate distance
+// HAVERSINE FORMULA TO CALCULATE DISTANCE
 function getDistance(lat1, lng1, lat2, lng2) {
   console.log("getDistance()"); 
   const R = 6371; // Radius of Earth in km

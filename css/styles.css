@@ -96,6 +96,33 @@ tr:hover {
   flex-shrink: 0; /* Prevents it from shrinking too much in wrap mode */
 }
 
+/* Position the suggestions container properly */
+.autocomplete-suggestions {
+  position: absolute;
+  top: 100%; /* Position right below the input */
+  left: 0;
+  width: 100%; /* Match width of the parent wrapper */
+  z-index: 1000; /* Ensure it appears above other content */
+  background-color: white;
+  border: 1px solid #ccc;
+  border-top: none; /* Creates a connected look with the input */
+  border-radius: 0 0 5px 5px; /* Rounded corners on bottom only */
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  max-height: 250px;
+  overflow-y: auto;
+  display: block; /* Ensure it's not affected by parent's flex */
+}
+
+/* Style for individual suggestions */
+.autocomplete-suggestions div {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.autocomplete-suggestions div:hover {
+  background-color: #f5f5f5;
+}
+
 /* Location input: Full width, space left for the icon */
 #locationInput {
   padding: 10px 35px 10px 10px; /* Right padding for icon */
@@ -106,19 +133,14 @@ tr:hover {
   width: 400px;
 }
 
-/* Location icon styling: clickable, positioned inside the input wrapper */
-.location-icon {
+/* Location icon styling */
+#locationIcon {
   position: absolute;
   right: 10px;
   font-size: 18px;
   cursor: pointer;
   user-select: none;
   color: #4CAF50;
-}
-
-/* Add a hover effect to the icon */
-.location-icon:hover {
-  color: #388e3c;
 }
 
 /* Hide the gps column */
