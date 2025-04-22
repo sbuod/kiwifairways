@@ -44,7 +44,7 @@ function fetchCourseData() {
     });
 }
 
-// GROUP ROWS BY CORSE NAME
+// GROUP ROWS BY COURSE NAME 
 function groupByCourseName(rows) {
   console.log("groupByCourseName()"); 
   return rows.reduce((acc, row) => {
@@ -55,7 +55,7 @@ function groupByCourseName(rows) {
   }, {});
 }
 
-// GET THE MOST RECENT ROW FOR EACH COURSE
+// GET THE MOST RECENT ROW FOR EACH COURSE FOR TABLE DATA
 function getMostRecentRows(groupedRows) {
   console.log("getMostRecentRows()"); 
   for (const courseName in groupedRows) {
@@ -97,6 +97,7 @@ function renderCourseData(rows) {
     th.id = 'distanceHeader';
     th.classList.add('sortable');
     th.dataset.column = 'distance';
+    
     th.addEventListener('click', () => { // Add click handler for sorting
       if (currentSortColumn === 'distance') {
         currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
@@ -107,6 +108,7 @@ function renderCourseData(rows) {
       sortTable('distance');
     });
     tableHeadRow.appendChild(th);
+
   }
   
   // Keep track of total and visible rows
@@ -312,7 +314,7 @@ function getColumnIndex(column) {
   }
 }
 
-// Generic table sorter
+// SORT THE TABLE BASED ON USER INTERACTION 
 function sortTable(column) {
   console.log(`sortTable() by '${column}' column, ${currentSortOrder}`);
 
@@ -458,6 +460,9 @@ function handleLocationIcon() {
           //handleLocationChange(userLat, userLong);
           renderCourseData(mostRecentRows);
 
+          // Add the class to show distance column
+          document.querySelector('#myTable').classList.add('show-distance');
+
           // Sort by distance immediately after rendering
           currentSortColumn = 'distance';
           currentSortOrder = 'asc'; // Shortest distance at top
@@ -484,6 +489,9 @@ function handleLocationIcon() {
 
     // Change the icon back to location pin
     locationIcon.innerHTML = '📍';
+
+    // Remove the class to hide distance column
+    document.querySelector('#myTable').classList.remove('show-distance');
 
     renderCourseData(mostRecentRows);
   }

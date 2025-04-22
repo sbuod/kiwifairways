@@ -188,4 +188,28 @@ tr:hover {
   #locationInput {
     width: 100%;
   }
+
+  /* === Only show 2nd and 6th columns === */
+  table th,
+  table td {
+    display: none; /* Hide everything by default */
+  }
+
+  /* Show Course Name (2nd column) */
+  table th:nth-child(2),
+  table td:nth-child(2) {
+    display: table-cell;
+  }
+
+  /* Show Green Fee (6th column) */
+  table th:nth-child(6),
+  table td:nth-child(6) {
+    display: table-cell;
+  }
+
+  /* When distance toggle is active, show distance column */
+  .show-distance #distanceHeader,
+  .show-distance .distance-cell {
+  display: table-cell !important; /* !important to override inline style */
+}
 }
