@@ -414,13 +414,6 @@ function setupLocationAutocomplete() {
 
         userLat = feature.geometry.coordinates[1];
         userLong = feature.geometry.coordinates[0];   
-        
-        renderCourseData(mostRecentRows);
-
-        // Sort by distance immediately after rendering
-        currentSortColumn = 'distance';
-        currentSortOrder = 'asc'; // Shortest distance at top
-        sortTable('distance');
 
         const item = document.createElement('div');
         item.textContent = fullLabel;
@@ -428,7 +421,12 @@ function setupLocationAutocomplete() {
         item.addEventListener('click', () => {
           input.value = fullLabel; // Set input value to selected location
           suggestionBox.innerHTML = '';
-          //sortCoursesByDistance(lat, lng); // Sort courses by proximity to selected location
+          locationIcon.innerHTML = '&#x274C;'; // Change the location icon to a clear icon ❌
+          
+          renderCourseData(mostRecentRows);//sortCoursesByDistance(lat, lng); // Sort courses by proximity to selected location
+          currentSortColumn = 'distance';
+          currentSortOrder = 'asc'; // Shortest distance at top
+          sortTable('distance');  // Sort by distance immediately after rendering
         });
 
         suggestionBox.appendChild(item); // Add suggestion to list
@@ -436,6 +434,7 @@ function setupLocationAutocomplete() {
     } catch (err) {
       console.error('Photon autocomplete error:', err); // Handle errors
     }
+
   });
 }
 

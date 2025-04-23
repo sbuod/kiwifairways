@@ -168,6 +168,18 @@ tr:hover {
 
 /* ========== RESPONSIVE DESIGN ========== */
 @media only screen and (max-width: 600px) {
+  
+  /* Improve container layout */
+  .container {
+    padding: 10px;
+    width: 90%;
+  }
+
+  /* Reduce logo size for mobile */
+  .site-logo {
+    max-width: 200px;
+  }
+  
   table {
     font-size: 14px;
     margin: 10px;
@@ -186,7 +198,7 @@ tr:hover {
 
   /* Ensure the location input itself expands in mobile view */
   #locationInput {
-    width: 100%;
+    width: 90%;
   }
 
   /* === Only show 2nd and 6th columns === */
