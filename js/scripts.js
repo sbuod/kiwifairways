@@ -19,6 +19,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const courseData = await fetchCourseData(); // Wait for course data before proceeding
   renderCourseData(courseData); // Display the course data
   populateFilters(mostRecentRows); // Populate dropdown filters for regions and holes
+
+  // Set initial sort column and order
+  currentSortColumn = 'courseName';
+  currentSortOrder = 'asc';
+  
+  // Apply initial sorting
+  sortTable('courseName');
+
   addEventListeners(); // Add event listeners for sorting and filtering
   
   locationIcon.addEventListener('click', handleLocationIcon); // Detect user location when the 📍 icon is clicked
