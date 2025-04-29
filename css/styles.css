@@ -243,6 +243,21 @@ tr:hover {
     box-sizing: border-box;
   }
 
+   /* ---- Unified <select> styling to match input fields ---- */
+   .filter-bar select {
+    appearance: none;           /* Remove native styles */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    font-family: inherit;
+    font-size: 16px;
+    color: #333;
+    background-color: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    height: 44px;               /* Match iOS default input height */
+  }
+
   /* ---- Handle the input wrapper for geolocation input ---- */
   .location-input-wrapper {
     display: flex;          /* So input inside can flex to full width */
