@@ -212,14 +212,19 @@ tr:hover {
   /* ---- Container adjustments for mobile layout ---- */
   .container {
     padding: 10px;
-    width: 95%;
-    max-width: 95%;
+    width: 85%;
+    max-width: 90%;
     margin: 0 auto;
+  }
+
+  .site-logo {
+    max-width: 150px; /* Adjust size as needed */
+    height: auto;
   }
 
   /* ---- Table adjustments for mobile readability ---- */
   table {
-    width: 95%;
+    width: 90%;
     margin: 10px auto;
     font-size: 14px;
   }
@@ -269,6 +274,10 @@ tr:hover {
     flex: 1;
     width: 100%;
     box-sizing: border-box;
+  }
+
+  table {
+    width: 100%;
   }
 
   /* ---- Hide all table columns by default ---- */
