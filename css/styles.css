@@ -206,62 +206,91 @@ tr:hover {
   text-align: left;
 }
 
-/* ========== RESPONSIVE DESIGN ========== */
+/* ========== RESPONSIVE DESIGN (Max-width: 600px) ========== */
 @media only screen and (max-width: 600px) {
-  
-  /* Improve container layout */
+
+  /* ---- Container adjustments for mobile layout ---- */
   .container {
     padding: 10px;
-    width: 90%;
+    width: 95%;
+    max-width: 95%;
+    margin: 0 auto;
   }
 
-  /* Reduce logo size for mobile */
-  .site-logo {
-    max-width: 200px;
-  }
-  
+  /* ---- Table adjustments for mobile readability ---- */
   table {
+    width: 95%;
+    margin: 10px auto;
     font-size: 14px;
-    margin: 10px;
   }
 
+  /* ---- Filter bar layout on mobile ---- */
   .filter-bar {
-    flex-direction: column; /* Stack filters vertically on small screens */
-    align-items: stretch; /* Inputs take full width */
+    display: flex;
+    flex-direction: column; /* Stack filter items vertically */
+    align-items: center;    /* Center-align the stacked items */
+    gap: 10px;              /* Add space between filter items */
+    width: 100%;
+    box-sizing: border-box;
   }
 
+  /* ---- Ensure all filter elements are same width ---- */
   .filter-bar input,
   .filter-bar select,
   .location-input-wrapper {
-    width: 90%; /* Fill most of the screen width */
+    width: 100%;
+    max-width: 400px;       /* Optional: keep input elements reasonably sized */
+    box-sizing: border-box;
   }
 
-  /* Ensure the location input itself expands in mobile view */
+  /* ---- Handle the input wrapper for geolocation input ---- */
+  .location-input-wrapper {
+    display: flex;          /* So input inside can flex to full width */
+    width: 100%;
+  }
+
+  /* ---- Ensure the actual location input fills the wrapper ---- */
   #locationInput {
-    width: 90%;
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  /* === Only show 2nd and 6th columns === */
+  /* ---- Hide all table columns by default ---- */
   table th,
   table td {
-    display: none; /* Hide everything by default */
+    display: none;
   }
 
-  /* Show Course Name (2nd column) */
+  /* ---- Show Course Name (2nd column) ---- */
   table th:nth-child(2),
   table td:nth-child(2) {
     display: table-cell;
+    width: 60%; /* Allocate most space to course name */
   }
 
-  /* Show Green Fee (6th column) */
+  /* ---- Show Green Fee (6th column) ---- */
   table th:nth-child(6),
   table td:nth-child(6) {
     display: table-cell;
+    width: 40%;
   }
 
-  /* When distance toggle is active, show distance column */
+  /* ---- When distance is toggled, show distance column (assumed last column) ---- */
   .show-distance #distanceHeader,
   .show-distance .distance-cell {
-  display: table-cell !important; /* !important to override inline style */
-}
+    display: table-cell !important;
+    width: 30% !important;
+  }
+
+  /* ---- Adjust layout of other columns when distance is visible ---- */
+  .show-distance th:nth-child(2),
+  .show-distance td:nth-child(2) {
+    width: 45% !important;
+  }
+
+  .show-distance th:nth-child(6),
+  .show-distance td:nth-child(6) {
+    width: 25% !important;
+  }
 }
