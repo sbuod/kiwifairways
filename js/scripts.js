@@ -318,7 +318,6 @@ function getColumnIndex(column) {
 function sortTable(column) {
   console.log(`sortTable() by '${column}' column, ${currentSortOrder}`);
 
-
   const rows = Array.from(document.querySelectorAll('#myTable tbody tr'));
 
   const sortedRows = rows.sort((a, b) => {
@@ -341,6 +340,31 @@ function sortTable(column) {
     const colIndex = getColumnIndex(column);
     const cellA = cellsA[colIndex - 1]?.textContent.trim() || '';
     const cellB = cellsB[colIndex - 1]?.textContent.trim() || '';
+
+   // Special handling for lastUpdated column - proper date comparison
+   if (column === 'lastUpdated') {
+    // Parse dates in DD/MM/YYYY format
+    const datePartsA = cellA.split('/');
+    const datePartsB = cellB.split('/');
+    
+    // Create date objects (format is DD/MM/YYYY)
+    const dateA = new Date(
+      parseInt(datePartsA[2]), // Year
+      parseInt(datePartsA[1]) - 1, // Month (0-based)
+      parseInt(datePartsA[0]) // Day
+    );
+    
+    const dateB = new Date(
+      parseInt(datePartsB[2]), // Year
+      parseInt(datePartsB[1]) - 1, // Month (0-based)
+      parseInt(datePartsB[0]) // Day
+    );
+    
+    // Compare timestamps
+    return currentSortOrder === 'asc' 
+      ? dateA.getTime() - dateB.getTime() 
+      : dateB.getTime() - dateA.getTime();
+  }
 
     // Numeric columns
     if (column === 'holes' || column === 'slope' || column === 'gf' || column === 'gfAffiliated' || column === 'membership' || column === 'members') {
