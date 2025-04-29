@@ -276,7 +276,26 @@ tr:hover {
     box-sizing: border-box;
   }
 
-  table {
+  /* ---- Put Region and Holes dropdowns side by side on mobile ---- */
+.dropdown-row {
+  display: flex;
+  justify-content: center;   /* Center in the filter bar */
+  gap: 10px;                 /* Space between dropdowns */
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+}
+
+/* ---- Ensure dropdowns are equal width and vertically aligned ---- */
+.dropdown-row select {
+  flex: 1;                  /* Take up equal space */
+  height: 40px;             /* Match height (adjust as needed) */
+  font-size: 16px;          /* Match input font size */
+  box-sizing: border-box;
+  padding: 5px 10px;
+}
+
+table {
     width: 100%;
   }
 
