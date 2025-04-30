@@ -117,6 +117,11 @@ tr:hover {
   width: 100%;
 }
 
+.dropdown-row {
+  display: flex;
+  gap: 15px;
+}
+
 /* Applies to both input and select dropdowns */
 .filter-bar input,
 .filter-bar select {
@@ -206,7 +211,16 @@ tr:hover {
   text-align: left;
 }
 
-/* ========== RESPONSIVE DESIGN (Max-width: 600px) ========== */
+/* ========== IPAD PORTRAIT RESPONSIVE DESIGN (Max-width: 600px) ========== */
+@media only screen and (max-width: 834px) {
+
+  .site-logo {
+    max-width: 200px; /* Adjust size as needed */
+    height: auto;
+  }
+}
+
+/* ========== iPHONE PORTRAIT RESPONSIVE DESIGN ========== */
 @media only screen and (max-width: 600px) {
 
   /* ---- Container adjustments for mobile layout ---- */
@@ -337,3 +351,5 @@ table {
     width: 25% !important;
   }
 }
+
+
