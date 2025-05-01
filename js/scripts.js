@@ -69,8 +69,8 @@ function getMostRecentRows(groupedRows) {
   for (const courseName in groupedRows) {
     const rows = groupedRows[courseName];
     const mostRecentRow = rows.reduce((latestRow, currentRow) => {
-      const latestDate = parseDate(latestRow[10]); // 'lastUpdated' column
-      const currentDate = parseDate(currentRow[10]);
+      const latestDate = parseDate(latestRow[14]); // 'lastUpdated' column
+      const currentDate = parseDate(currentRow[14]);
       return currentDate > latestDate ? currentRow : latestRow;
     });
 
@@ -132,11 +132,12 @@ function renderCourseData(rows) {
       const td = document.createElement('td'); // Create a table data cell
 
       // Make website column clickable
-      if (i === 4 && cell) {
+      if (i === 12 && cell) {
         const link = document.createElement('a');
         link.href = cell;
-        link.textContent = cell;
+        //link.textContent = cell;
         link.target = '_blank';
+        link.innerHTML = '⛳';
         td.appendChild(link);
       } else {
         td.textContent = cell; // Regular cell content
@@ -147,7 +148,7 @@ function renderCourseData(rows) {
 
     // Add the distance column data if user's location is available
     if (userLat && userLong) {
-      const gpsCell = row[11]; // Get GPS data from 12th column of Google sheet  
+      const gpsCell = row[14]; // Get GPS data from 14th column of Google sheet  
       
       if (gpsCell) { // Check that GPS data exists
         const [lat, lng] = gpsCell.split(',').map(Number); // Parse latitude and longitude
@@ -249,13 +250,13 @@ function filterTable() {
   if (userLat && userLong) {
     const filteredRows = Array.from(document.querySelectorAll('#myTable tbody tr')).filter(row => row.style.display !== 'none');
     filteredRows.forEach(row => {
-      const gpsCell = row.querySelector('td:nth-child(13)');
+      const gpsCell = row.querySelector('td:nth-child(15)');
       if (gpsCell && gpsCell.textContent.includes(',')) {
         const [lat, lng] = gpsCell.textContent.split(',').map(Number);
         const distance = getDistance(userLat, userLng, lat, lng).toFixed(2);
 
         // Find or create the distance column
-        let distanceCell = row.querySelector('td:nth-child(14)');
+        let distanceCell = row.querySelector('td:nth-child(16)');
         if (!distanceCell || gpsCell === distanceCell) {
           distanceCell = document.createElement('td');
           row.appendChild(distanceCell);
@@ -309,15 +310,18 @@ function getColumnIndex(column) {
     case 'region': return 1;
     case 'courseName': return 2;
     case 'holes': return 3;
-    case 'slope': return 4;
-    case 'website': return 5;
-    case 'gf': return 6;
-    case 'gfAffiliated': return 7;
-    case 'membership': return 8;
-    case 'members': return 9;
-    case 'notes': return 10;
-    case 'lastUpdated': return 11;
-    case 'gps': return 12;
+    case 'rating' : return 4;
+    case 'slope': return 5;
+    case 'length': return 6;
+    case 'par': return 7;
+    case 'gf': return 8;
+    case 'gfAffiliated': return 9;
+    case 'membership': return 10;
+    case 'members': return 11;
+    case 'notes': return 12;
+    case 'website': return 13;
+    case 'lastUpdated': return 14;
+    case 'gps': return 15;
     default: return 1;
   }
 }
@@ -375,7 +379,7 @@ function sortTable(column) {
   }
 
     // Numeric columns
-    if (column === 'holes' || column === 'slope' || column === 'gf' || column === 'gfAffiliated' || column === 'membership' || column === 'members') {
+    if (column === 'holes' || column === 'slope' || column === 'gf' || column === 'gfAffiliated' || column === 'membership' || column === 'members' | column === 'rating') {
       // Remove dollar signs and other non-numeric characters
       const numA = parseFloat(cellA.replace(/[^0-9.]/g, '')) || 0;
       const numB = parseFloat(cellB.replace(/[^0-9.]/g, '')) || 0;
@@ -537,7 +541,7 @@ function sortCoursesByDistance(userLat, userLng) {
   // Find the GPS cell (typically the cell before the last one if distance is present)
   const cells = row.querySelectorAll('td');
   const gpsCell = cells[cells.length - 2]; // Second-to-last cell is GPS when distance is present
-    
+
   // Parse GPS coordinates
   if (gpsCell && gpsCell.textContent.includes(',')) {
     const [lat, lng] = gpsCell.textContent.trim().split(',').map(Number);

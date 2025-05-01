@@ -53,6 +53,12 @@ th {
   cursor: pointer;
 }
 
+a {
+  text-decoration: none;
+}
+
+
+
 /* ========== SORTING INDICATORS ========== */
 /* Style for sortable headers */
 th.sortable {
@@ -188,11 +194,14 @@ tr:hover {
   color: #4CAF50;
 }
 
-/* Hide the gps column */
+/* Hide the 13th (notes) and 15th (gps) columns */
 #myTable td:nth-child(12),
-#myTable th:nth-child(12) {
+#myTable th:nth-child(12),
+#myTable td:nth-child(15),
+#myTable th:nth-child(15) {
   display: none;
 }
+
 
 /* ========== TABLE FOOTER (ROW COUNT) ========== */
 .table-footer {
@@ -327,8 +336,8 @@ table {
   }
 
   /* ---- Show Green Fee (6th column) ---- */
-  table th:nth-child(6),
-  table td:nth-child(6) {
+  table th:nth-child(9),
+  table td:nth-child(9) {
     display: table-cell;
     width: 40%;
   }
@@ -346,8 +355,8 @@ table {
     width: 45% !important;
   }
 
-  .show-distance th:nth-child(6),
-  .show-distance td:nth-child(6) {
+  .show-distance th:nth-child(9),
+  .show-distance td:nth-child(9) {
     width: 25% !important;
   }
 }
