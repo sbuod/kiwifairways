@@ -227,6 +227,21 @@ tr:hover {
     max-width: 200px; /* Adjust size as needed */
     height: auto;
   }
+
+  /* ---- Unified <select> styling to match input fields ---- */
+  .filter-bar select {
+    appearance: none;           /* Remove native styles */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    font-family: inherit;
+    font-size: 16px;
+    color: #333;
+    background-color: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    height: 44px;               /* Match iOS default input height */
+  }
 }
 
 /* ========== iPHONE PORTRAIT RESPONSIVE DESIGN ========== */
@@ -336,8 +351,8 @@ table {
   }
 
   /* ---- Show Green Fee (6th column) ---- */
-  table th:nth-child(9),
-  table td:nth-child(9) {
+  table th:nth-child(8),
+  table td:nth-child(8) {
     display: table-cell;
     width: 40%;
   }
@@ -355,8 +370,8 @@ table {
     width: 45% !important;
   }
 
-  .show-distance th:nth-child(9),
-  .show-distance td:nth-child(9) {
+  .show-distance th:nth-child(8),
+  .show-distance td:nth-child(8) {
     width: 25% !important;
   }
 }

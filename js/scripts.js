@@ -253,7 +253,7 @@ function filterTable() {
       const gpsCell = row.querySelector('td:nth-child(15)');
       if (gpsCell && gpsCell.textContent.includes(',')) {
         const [lat, lng] = gpsCell.textContent.split(',').map(Number);
-        const distance = getDistance(userLat, userLng, lat, lng).toFixed(2);
+        const distance = getDistance(userLat, userLong, lat, lng).toFixed(2);
 
         // Find or create the distance column
         let distanceCell = row.querySelector('td:nth-child(16)');
