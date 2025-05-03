@@ -1,7 +1,10 @@
 /* ========== GENERAL STYLES ========== */
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #DACEB7;
+  /*background-color: #DACEB7; original logo*/
+  background-color: #F6EBD5;
+  /*background-color: #F5EDE0;*/
+
   margin: 0;
   padding: 0;
   display: flex; /* Use flexbox to center content */
@@ -48,7 +51,7 @@ th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: #639F54;
+  background-color: #5B6E2C;
   color: white;
   cursor: pointer;
 }
