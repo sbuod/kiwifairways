@@ -34,6 +34,10 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   </head>
 
   <body>
@@ -71,20 +75,19 @@
         <thead>
           <tr>
             <th class="sortable" data-column="region">Region</th>
-            <th class="sortable" data-column="courseName">Course Name</th>
+            <th class="sortable" data-column="name">Course Name</th>
             <th class="sortable" data-column="holes">Holes</th>
             <th class="sortable" data-column="rating">Rating</th>
             <th class="sortable" data-column="slope">Slope</th>
             <th class="sortable" data-column="length">Length</th>
             <th class="sortable" data-column="par">Par</th>
-            <th class="sortable" data-column="gf">GF</th>
-            <th class="sortable" data-column="gfAffiliated">GF (A)</th>
-            <th class="sortable" data-column="membership">Membership</th>
-            <th class="sortable" data-column="members">Members</th>
+            <th class="sortable" data-column="affiliated_gf">GF</th>
+            <th class="sortable" data-column="unaffiliated_gf">GF (A)</th>
+            <th class="sortable" data-column="full_membership">Membership</th>
+            <th class="sortable" data-column="num_members">Members</th>
             <th class="sortable" data-column="notes">Notes</th>
             <th class="sortable" data-column="website">Website</th>
-            <th class="sortable" data-column="lastUpdated">Last Updated</th>
-            <th class="sortable" data-column="gps">Location</th>
+            <th class="sortable" data-column="date">Last Updated</th>
             <th class="sortable" data-column="distance" id="distanceHeader" style="display:none;">Distance</th>
           </tr>
         </thead>
@@ -98,11 +101,6 @@
         <div id="rowCount" class="row-count">Showing 0 of 0 courses</div>
       </div>
     </div>
-
-    <!-- Photon & Leaflet JS -->
-    <script src="https://unpkg.com/@mapbox/mapbox-sdk/umd/mapbox-sdk.min.js"></script>
-    <script src="https://unpkg.com/leaflet"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <!-- Your Custom Script -->
     <script src="js/scripts.js"></script>

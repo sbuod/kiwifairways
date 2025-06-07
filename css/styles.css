@@ -222,6 +222,12 @@ tr:hover {
   text-align: left;
 }
 
+/* Show the Distance column when .show-distance is on the table (desktop and mobile) */
+.show-distance #distanceHeader,
+.show-distance .distance-cell {
+  display: table-cell !important;
+}
+
 /* ========== IPAD PORTRAIT RESPONSIVE DESIGN (Max-width: 600px) ========== */
 @media only screen and (max-width: 834px) {
 

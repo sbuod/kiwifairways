@@ -1,402 +1,418 @@
 // CONFIGURATION
-const sheetId = '1fMXuc1NynI3IncXzPLefj2OETDnF0NGAVKqIojP-GlY'; // Google Sheets ID
-const apiKey = 'AIzaSyA54V9Ype7Gkw71MfEVMEYjjdkJKF0w2ac'; // Google Sheets API Key
-const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?key=${apiKey}`; // API URL
+const supabase_url = 'https://ytafvcupzoyxqucfleiw.supabase.co'; 
+const supabase_anon_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0YWZ2Y3Vwem95eHF1Y2ZsZWl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxODUwMTYsImV4cCI6MjA2MTc2MTAxNn0.gc4VM3ypn7WNOgpDOpEkYsmSFEGh9PB1XSEv5SjC0jc';
+const supabase_connection = supabase.createClient(supabase_url, supabase_anon_key);
 
 const inputLocation = document.getElementById('locationInput');
 const detectLocation = document.getElementById('detectLocation');
-const mostRecentRows = []
+const locationIcon = document.getElementById('locationIcon');
+let courseData = []; // Store course data globally
 
-let currentSortColumn = null; // Sorting column
-let currentSortOrder = 'asc'; // Sorting order
-let userLat = null; // User-provided latitude
-let userLong = null; // User-provided longitude
+let currentSortColumn = null;
+let currentSortOrder = 'asc';
+let userLat = null;
+let userLng = null;
 
 // DOM INITIALISATION
 document.addEventListener('DOMContentLoaded', async () => {  
-  console.log("On the tee - kiwifairways.co.nz 🏌️‍♂️🏌️‍♀️");
+  console.log("🏌️‍♂️ On the tee - kiwifairways.co.nz");
   
-  const courseData = await fetchCourseData(); // Wait for course data before proceeding
-  renderCourseData(courseData); // Display the course data
-  populateFilters(mostRecentRows); // Populate dropdown filters for regions and holes
+  courseData = await fetchCourseData(null, null); // Pass nulls for no user location
+  renderCourseData(courseData);
+  populateFilters(courseData);
 
-  // Set initial sort column and order
-  currentSortColumn = 'courseName';
+  currentSortColumn = 'name';
   currentSortOrder = 'asc';
-  
-  // Apply initial sorting
-  sortTable('courseName');
+  sortTable('name');
 
-  addEventListeners(); // Add event listeners for sorting and filtering
-  
-  locationIcon.addEventListener('click', handleLocationIcon); // Detect user location when the 📍 icon is clicked
+  addEventListeners();
 
+  if (locationIcon) {
+    locationIcon.addEventListener('click', handleLocationIcon);
+  }
 });
 
-// FETCH COURSE DATA
-function fetchCourseData() {
-  console.log("fetchCourseData()");
-  return fetch(url)
-    .then(response => response.json()) // Fetch the data from Google Sheets API
-    .then(data => {
-      const headers = data.values[0]; // Use the first row as headers
-      const rows = data.values.slice(1); // Use the rest of the rows for data
-      const groupedRows = groupByCourseName(rows); // Group rows by course name
-      const mostRecentRows = getMostRecentRows(groupedRows); // Get most recent rows for each course
-      courseData = mostRecentRows; // Store in global variable
-      return mostRecentRows;
-    })
-    .catch(error => {
-      console.error(`Error fetching course data: ${error}`);
-      return []; // Return empty array in case of error
+// FETCH COURSE DATA FROM SUPABASE (JOIN ALL THREE TABLES)
+async function fetchCourseData() {
+  try {
+    // Fetch all courses, with all layouts and stats in one go
+    const { data: courses, error } = await supabase_connection
+      .from('course_info')
+      .select(`
+        *,
+        course_layouts:course_layouts!tees_course_id_fkey(*),
+        course_stats:course_stats!course_stats_course_id_fkey(*)
+      `);
+
+    if (error) {
+      console.error('🚑 Error fetching course info:', error);
+      return [];
+    }
+
+    // For each course, pick the most recent stats and the first layout
+    const enrichedCourses = courses.map(course => {
+      // Pick the first layout (or add logic to pick a preferred one)
+      const layoutArr = course.course_layouts || [];
+      const layout = layoutArr[0] || {};
+
+      // Pick the most recent stats by date
+      const statsArr = course.course_stats || [];
+      let latestStats = {};
+      if (statsArr.length > 0) {
+        latestStats = statsArr.reduce((latest, stat) => {
+          if (!latest.date) return stat;
+          return new Date(stat.date) > new Date(latest.date) ? stat : latest;
+        }, statsArr[0]);
+      }
+
+      return {
+        // Basic course info
+        id: course.id,
+        name: course.name,
+        region: course.region,
+        website: course.website,
+        facebook: course.facebook,
+        instagram: course.instagram,
+        email: course.email,
+        location: course.location,
+
+        // Layout info
+        holes: layout.holes || '',
+        par: layout.par || '',
+        rating: layout.rating || '',
+        slope: layout.slope || '',
+        length: layout.length || '',
+        layout_name: layout.name || '',
+
+        // Stats info
+        affiliated_gf: latestStats.affiliated_gf || '',
+        unaffiliated_gf: latestStats.unaffiliated_gf || '',
+        full_membership: latestStats.full_membership || '',
+        num_members: latestStats.num_members || '',
+        notes: latestStats.notes || '',
+        date: latestStats.date || '',
+
+        // Extract GPS coordinates from PostGIS geography type
+        gps: course.location ? extractGpsFromLocation(course.location) : ''
+      };
     });
-}
 
-// GROUP ROWS BY COURSE NAME 
-function groupByCourseName(rows) {
-  console.log("groupByCourseName()"); 
-  return rows.reduce((acc, row) => {
-    const courseName = row[1]; // Column index for course name
-    if (!acc[courseName]) acc[courseName] = [];
-    acc[courseName].push(row);
-    return acc;
-  }, {});
-}
+    console.log('⛳ Successfully fetched all course data in one query');
+    return enrichedCourses;
 
-// GET THE MOST RECENT ROW FOR EACH COURSE FOR TABLE DATA
-function getMostRecentRows(groupedRows) {
-  console.log("getMostRecentRows()"); 
-  for (const courseName in groupedRows) {
-    const rows = groupedRows[courseName];
-    const mostRecentRow = rows.reduce((latestRow, currentRow) => {
-      const latestDate = parseDate(latestRow[14]); // 'lastUpdated' column
-      const currentDate = parseDate(currentRow[14]);
-      return currentDate > latestDate ? currentRow : latestRow;
-    });
-
-    mostRecentRows.push(mostRecentRow);
+  } catch (error) {
+    console.error(`🚑 Error fetching course data: ${error}`);
+    return [];
   }
-  return mostRecentRows;
+}
+
+// EXTRACT GPS COORDINATES FROM POSTGIS GEOGRAPHY TYPE
+function extractGpsFromLocation(location) {
+  if (!location) return '';
+
+  try {
+    // If it's a string, check if it's JSON or comma-separated
+    if (typeof location === 'string') {
+      const trimmed = location.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        // It's GeoJSON
+        const geoData = JSON.parse(trimmed);
+        if (geoData && geoData.coordinates && Array.isArray(geoData.coordinates)) {
+          const [lng, lat] = geoData.coordinates;
+          return `${lat},${lng}`;
+        }
+      } else if (trimmed.includes(',')) {
+        // It's a comma-separated string
+        const [lng, lat] = trimmed.split(',').map(Number);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          return `${lat},${lng}`;
+        }
+      }
+    } else if (location && location.coordinates && Array.isArray(location.coordinates)) {
+      // Already an object
+      const [lng, lat] = location.coordinates;
+      return `${lat},${lng}`;
+    }
+  } catch (e) {
+    console.error('🚑 Error parsing location data:', e, location);
+  }
+
+  return '';
 }
 
 // RENDER COURSE DATA
-function renderCourseData(rows) {
-  console.log("renderCourseData()");  
-  console.log(`Rendering table with userLat: ${userLat}, userLng: ${userLong})`);
-
+function renderCourseData(courses) {
   const tableBody = document.querySelector('#myTable tbody');
+  if (!tableBody) return;
+  
   tableBody.innerHTML = ''; // Clear existing rows
 
-  // Add "Distance" column header if user's location is known
-  const tableHeadRow = document.querySelector('#myTable thead tr');
-  const existingDistanceHeader = document.getElementById('distanceHeader');
-  
-  console.log(`Determining if distance column should be displayed (userLat: ${userLat}, userLng: ${userLong})`);
-  
-  // Only remove existing distance header if we don't have location data
-  if (!userLat || !userLong) {
-    if (existingDistanceHeader) {
-      existingDistanceHeader.remove();
-    }
-  } else if (!existingDistanceHeader) {
-    // If we have location data but no header yet, create it
-    const th = document.createElement('th');
-    th.textContent = 'Distance';
-    th.id = 'distanceHeader';
-    th.classList.add('sortable');
-    th.dataset.column = 'distance';
-    
-    th.addEventListener('click', () => { // Add click handler for sorting
-      if (currentSortColumn === 'distance') {
-        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-      } else {
-        currentSortColumn = 'distance';
-        currentSortOrder = 'asc';
-      }
-      sortTable('distance');
-    });
-    tableHeadRow.appendChild(th);
-
-  }
-  
-  // Keep track of total and visible rows
-  let totalRowsCount = rows.length;
+  let totalRowsCount = courses.length;
   let visibleRowsCount = 0;
   
-  // Render each row
-  rows.forEach(row => {
-    const tr = document.createElement('tr'); // Create a new table row
+  // Render each course
+  courses.forEach(course => {
+    const tr = document.createElement('tr');
+
+    // Create cells for each column in the expected order
+    // [region, name, holes, rating, slope, length, par, affiliated_gf, unaffiliated_gf, full_membership, num_members, notes, website, date, gps]
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      return `${day}-${month}-${year}`;
+    };
+
+    const cells = [
+      course.region || '',
+      course.name || '',
+      course.holes || '',
+      course.rating || '',
+      course.slope || '',
+      course.length || '',
+      course.par || '',
+      course.unaffiliated_gf || '',   // <-- Swap this
+      course.affiliated_gf || '',     // <-- and this
+      course.full_membership || '',
+      course.num_members || '',
+      course.notes || '',
+      course.website || '',
+      formatDate(course.date) // <-- formatted date
+    ];
 
     // Add normal cells from the data
-    row.forEach((cell, i) => {
-      const td = document.createElement('td'); // Create a table data cell
+    cells.forEach((cellValue, i) => {
+      const td = document.createElement('td');
 
-      // Make website column clickable
-      if (i === 12 && cell) {
+      // Make website column clickable (index 12)
+      if (i === 12 && cellValue) {
         const link = document.createElement('a');
-        link.href = cell;
-        //link.textContent = cell;
+        link.href = cellValue.startsWith('http') ? cellValue : `https://${cellValue}`;
         link.target = '_blank';
         link.innerHTML = '⛳';
         td.appendChild(link);
       } else {
-        td.textContent = cell; // Regular cell content
+        td.textContent = cellValue;
       }
 
-      tr.appendChild(td); // Add cell to row
+      tr.appendChild(td);
     });
 
     // Add the distance column data if user's location is available
-    if (userLat && userLong) {
-      const gpsCell = row[14]; // Get GPS data from 14th column of Google sheet  
-      
-      if (gpsCell) { // Check that GPS data exists
-        const [lat, lng] = gpsCell.split(',').map(Number); // Parse latitude and longitude
-        
-        if (!isNaN(lat) && !isNaN(lng)) { // Make sure we have valid coordinates
-          const distance = getDistance(userLat, userLong, lat, lng).toFixed(2); // Calculate distance
-          const distanceCell = document.createElement('td');
-          distanceCell.textContent = `${distance} km`; // Display distance in km
-          distanceCell.classList.add('distance-cell'); // Add a class for easier identification
-          distanceCell.dataset.value = distance; // Add raw value for sorting
-          tr.appendChild(distanceCell); // Add distance cell to row
-        } else {
-          // Add empty cell if coordinates are invalid
-          const distanceCell = document.createElement('td');
-          distanceCell.textContent = 'N/A';
-          distanceCell.classList.add('distance-cell');
-          tr.appendChild(distanceCell);
-        }
+    if (userLat && userLng) {
+      const gpsData = course.gps;
+      const distanceCell = document.createElement('td');
+      distanceCell.classList.add('distance-cell');
+
+      if (typeof course.distance_km === 'number') {
+        distanceCell.textContent = `${course.distance_km.toFixed(2)} km`;
+        distanceCell.dataset.value = course.distance_km;
       } else {
-        // Add empty cell if no GPS data
-        const distanceCell = document.createElement('td');
         distanceCell.textContent = 'N/A';
-        distanceCell.classList.add('distance-cell');
-        tr.appendChild(distanceCell);
       }
+      tr.appendChild(distanceCell);
     }
 
-    tableBody.appendChild(tr); // Add row to table body
+    tableBody.appendChild(tr);
     visibleRowsCount++;
   });
-
-  // Re-apply filtering and distance calculation after rendering
-  filterTable(); // Apply filtering to the table
+  
+  console.log(`⛳ Rendered course data with userLat: ${userLat}, userLng: ${userLng})`);
+  // Re-apply filtering after rendering
+  filterTable();  
 }
 
-// PARSE DATES
-function parseDate(dateString) {
-  const date = new Date(dateString);
-  return isNaN(date) ? new Date(0) : date; // If invalid date, return epoch
-}
-
-
-// POPOULATE HOLES AND REGIONS FILTERS
-function populateFilters(rows) {
-  console.log("populateFilters()"); 
+// POPULATE HOLES AND REGIONS FILTERS
+function populateFilters(courses) {
   const uniqueRegions = new Set();
   const uniqueHoles = new Set();
 
-  rows.forEach(row => {
-    uniqueRegions.add(row[0]); // Region
-    uniqueHoles.add(row[2]);   // Holes
+  courses.forEach(course => {
+    if (course.region) uniqueRegions.add(course.region);
+    if (course.holes) uniqueHoles.add(course.holes.toString());
   });
 
-  populateFilter('regionFilter', uniqueRegions); // Populate region filter
-  populateFilter('holesFilter', uniqueHoles);   // Populate holes filter
+  populateFilter('regionFilter', uniqueRegions);
+  populateFilter('holesFilter', uniqueHoles);
+  console.log('⛳ Region and # holes filters populated'); 
 }
 
-// ???
 function populateFilter(selectId, values) {
-  console.log("populateFilter()"); 
   const select = document.getElementById(selectId);
+  if (!select) return;
+  
+  // Clear existing options except the first one (usually "All")
+  const firstOption = select.firstElementChild;
+  select.innerHTML = '';
+  if (firstOption) {
+    select.appendChild(firstOption);
+  }
+  
   [...values].sort().forEach(value => {
     const option = document.createElement('option');
     option.value = value;
     option.textContent = value;
-    select.appendChild(option); // Add each option to select element
+    select.appendChild(option);
   });
 }
 
 // FILTER THE TABLE WHEN REQUESTED
 function filterTable() {
-  console.log("filterTable()"); 
-  const searchValue = document.getElementById('searchInput').value.toLowerCase();
-  const selectedRegion = document.getElementById('regionFilter').value;
-  const selectedHoles = document.getElementById('holesFilter').value;
+  const searchInput = document.getElementById('searchInput');
+  const regionFilter = document.getElementById('regionFilter');
+  const holesFilter = document.getElementById('holesFilter');
+  
+  if (!searchInput || !regionFilter || !holesFilter) return;
+  
+  const searchValue = searchInput.value.toLowerCase();
+  const selectedRegion = regionFilter.value;
+  const selectedHoles = holesFilter.value;
 
   const rows = document.querySelectorAll('#myTable tbody tr');
   let visibleRowsCount = 0;
   const totalRowsCount = rows.length;
   
-
   rows.forEach(row => {
     const cells = Array.from(row.querySelectorAll('td'));
     const rowText = cells.map(cell => cell.textContent.toLowerCase()).join(' ');
-    const region = cells[0].textContent;
-    const holes = cells[2].textContent;
+    const region = cells[0]?.textContent || '';
+    const holes = cells[2]?.textContent || '';
 
     const matchesSearch = rowText.includes(searchValue);
     const matchesRegion = !selectedRegion || region === selectedRegion;
     const matchesHoles = !selectedHoles || holes === selectedHoles;
 
     const shouldShow = matchesSearch && matchesRegion && matchesHoles;
-
-    row.style.display = (matchesSearch && matchesRegion && matchesHoles) ? '' : 'none';
+    row.style.display = shouldShow ? '' : 'none';
     if (shouldShow) visibleRowsCount++;
   });
 
-  // Recalculate distances for filtered rows after search
-  if (userLat && userLong) {
-    const filteredRows = Array.from(document.querySelectorAll('#myTable tbody tr')).filter(row => row.style.display !== 'none');
-    filteredRows.forEach(row => {
-      const gpsCell = row.querySelector('td:nth-child(15)');
-      if (gpsCell && gpsCell.textContent.includes(',')) {
-        const [lat, lng] = gpsCell.textContent.split(',').map(Number);
-        const distance = getDistance(userLat, userLong, lat, lng).toFixed(2);
-
-        // Find or create the distance column
-        let distanceCell = row.querySelector('td:nth-child(16)');
-        if (!distanceCell || gpsCell === distanceCell) {
-          distanceCell = document.createElement('td');
-          row.appendChild(distanceCell);
-        }
-
-        distanceCell.textContent = `${distance} km`;
-      }
-    });
-  }
   // Update the visible row count
   const rowCountDisplay = document.getElementById('rowCount');
   if (rowCountDisplay) {
     rowCountDisplay.innerText = `Showing ${visibleRowsCount} of ${totalRowsCount} courses`;
   }
+  console.log(`⛳ Checked filters and filtered data accordingly`);
 }
 
 // MAKE TABLE HEADERS CLICKABLE & TABLE SORTABLE
 function addEventListeners() {
-  console.log("addEventListeners()"); 
   document.querySelectorAll('.sortable').forEach(th => {
     th.addEventListener('click', () => {
       const column = th.dataset.column;
       if (column === currentSortColumn) {
-        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc'; // Toggle sort order
+        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
       } else {
         currentSortColumn = column;
-        currentSortOrder = 'asc'; // Set default sort order to ascending
+        currentSortOrder = 'asc';
       }
-      sortTable(column); // Sort the table based on the selected column
+      sortTable(column);
     });
   });
 
   // Hook up filters and search
-  document.getElementById('searchInput').addEventListener('input', filterTable);
-  document.getElementById('regionFilter').addEventListener('change', filterTable);
-  document.getElementById('holesFilter').addEventListener('change', filterTable);
+  const searchInput = document.getElementById('searchInput');
+  const regionFilter = document.getElementById('regionFilter');
+  const holesFilter = document.getElementById('holesFilter');
+  
+  if (searchInput) searchInput.addEventListener('input', filterTable);
+  if (regionFilter) regionFilter.addEventListener('change', filterTable);
+  if (holesFilter) holesFilter.addEventListener('change', filterTable);
 
+  console.log('⛳ Added event listeners to table headers and inputs'); 
   // Autocomplete input
-  setupLocationAutocomplete(); // Set up location autocomplete feature
+  setupLocationAutocomplete();
 }
 
-// DETERMINE COLUMN INDEX (NOT SURE WHY...)
+// DETERMINE COLUMN INDEX
 function getColumnIndex(column) {
-  console.log("getColumnIndex()"); 
-  if (column === 'distance') {
-    // Return the last column index 
+  if (column === 'distance_km') {
     const headerCount = document.querySelectorAll('#myTable thead th').length;
+    console.log(`⛳ GetColumnIndex('${column}') returned:`, headerCount);
     return headerCount;
   }
+
+  let index;
   switch (column) {
-    case 'region': return 1;
-    case 'courseName': return 2;
-    case 'holes': return 3;
-    case 'rating' : return 4;
-    case 'slope': return 5;
-    case 'length': return 6;
-    case 'par': return 7;
-    case 'gf': return 8;
-    case 'gfAffiliated': return 9;
-    case 'membership': return 10;
-    case 'members': return 11;
-    case 'notes': return 12;
-    case 'website': return 13;
-    case 'lastUpdated': return 14;
-    case 'gps': return 15;
-    default: return 1;
+    case 'region': index = 1; break;
+    case 'name': index = 2; break;
+    case 'holes': index = 3; break;
+    case 'rating': index = 4; break;
+    case 'slope': index = 5; break;
+    case 'length': index = 6; break;
+    case 'par': index = 7; break;
+    case 'affiliated_gf': index = 8; break;
+    case 'unaffiliated_gf': index = 9; break;
+    case 'full_membership': index = 10; break;
+    case 'num_members': index = 11; break;
+    case 'notes': index = 12; break;
+    case 'website': index = 13; break;
+    case 'date': index = 14; break;
+    default: index = 1;
   }
+  console.log(`⛳ GetColumnIndex('${column}') returned:`, index);
+  return index;
 }
 
 // SORT THE TABLE BASED ON USER INTERACTION 
 function sortTable(column) {
-  console.log(`sortTable() by '${column}' column, ${currentSortOrder}`);
+  const tableBody = document.querySelector('#myTable tbody');
+  if (!tableBody) return;
 
-  const rows = Array.from(document.querySelectorAll('#myTable tbody tr'));
+  const rows = Array.from(tableBody.querySelectorAll('tr'));
+  let colIndex = null;
 
-  const sortedRows = rows.sort((a, b) => {
-    // Get all cells in each row
-    const cellsA = a.querySelectorAll('td');
-    const cellsB = b.querySelectorAll('td');
-    
-    // Special handling for distance column - always use the last cell
-    if (column === 'distance') {
-      const distanceCellA = cellsA[cellsA.length - 1].textContent.trim();
-      const distanceCellB = cellsB[cellsB.length - 1].textContent.trim();
-      
-      const numA = parseFloat(distanceCellA.replace('km', '').trim()) || 0;
-      const numB = parseFloat(distanceCellB.replace('km', '').trim()) || 0;
-      
-      return currentSortOrder === 'asc' ? numA - numB : numB - numA;
-    }
-    
-    // For other columns, use the column index approach
-    const colIndex = getColumnIndex(column);
-    const cellA = cellsA[colIndex - 1]?.textContent.trim() || '';
-    const cellB = cellsB[colIndex - 1]?.textContent.trim() || '';
-
-   // Special handling for lastUpdated column - proper date comparison
-   if (column === 'lastUpdated') {
-    // Parse dates in DD/MM/YYYY format
-    const datePartsA = cellA.split('/');
-    const datePartsB = cellB.split('/');
-    
-    // Create date objects (format is DD/MM/YYYY)
-    const dateA = new Date(
-      parseInt(datePartsA[2]), // Year
-      parseInt(datePartsA[1]) - 1, // Month (0-based)
-      parseInt(datePartsA[0]) // Day
-    );
-    
-    const dateB = new Date(
-      parseInt(datePartsB[2]), // Year
-      parseInt(datePartsB[1]) - 1, // Month (0-based)
-      parseInt(datePartsB[0]) // Day
-    );
-    
-    // Compare timestamps
-    return currentSortOrder === 'asc' 
-      ? dateA.getTime() - dateB.getTime() 
-      : dateB.getTime() - dateA.getTime();
+  // For distance, always use the last column
+  if (column !== 'distance_km') {
+    colIndex = getColumnIndex(column) - 1;
   }
 
+  const sortedRows = rows.sort((a, b) => {
+    const cellsA = a.querySelectorAll('td');
+    const cellsB = b.querySelectorAll('td');
+
+    // Distance column: always last cell
+    if (column === 'distance_km') {
+      const distanceA = parseFloat(cellsA[cellsA.length - 1].textContent.replace('km', '').trim()) || 0;
+      const distanceB = parseFloat(cellsB[cellsB.length - 1].textContent.replace('km', '').trim()) || 0;
+      return currentSortOrder === 'asc' ? distanceA - distanceB : distanceB - distanceA;
+    }
+
+    const cellA = cellsA[colIndex]?.textContent.trim() || '';
+    const cellB = cellsB[colIndex]?.textContent.trim() || '';
+
+    // Date column
+    if (column === 'date') {
+      // Parse dd-mm-yyyy to Date object
+      const parseDMY = (str) => {
+        if (!str) return new Date(0); // Treat empty as oldest
+        const [day, month, year] = str.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      };
+      const dateA = parseDMY(cellA);
+      const dateB = parseDMY(cellB);
+      return currentSortOrder === 'asc'
+        ? dateA - dateB
+        : dateB - dateA;
+    }
+
     // Numeric columns
-    if (column === 'holes' || column === 'slope' || column === 'gf' || column === 'gfAffiliated' || column === 'membership' || column === 'members' | column === 'rating') {
-      // Remove dollar signs and other non-numeric characters
+    if (['holes', 'slope', 'affiliated_gf', 'unaffiliated_gf', 'full_membership', 'num_members', 'rating', 'length', 'par'].includes(column)) {
       const numA = parseFloat(cellA.replace(/[^0-9.]/g, '')) || 0;
       const numB = parseFloat(cellB.replace(/[^0-9.]/g, '')) || 0;
       return currentSortOrder === 'asc' ? numA - numB : numB - numA;
     }
 
-    // Fallback for string sorting
+    // String columns (case-insensitive)
     return currentSortOrder === 'asc'
-      ? cellA.localeCompare(cellB)
-      : cellB.localeCompare(cellA);
+      ? cellA.localeCompare(cellB, undefined, { sensitivity: 'base' })
+      : cellB.localeCompare(cellA, undefined, { sensitivity: 'base' });
   });
 
-  // Clear sorting indicators from all headers
+  // Clear sorting indicators
   document.querySelectorAll('#myTable th').forEach(th => {
     th.classList.remove('sorted-asc', 'sorted-desc');
   });
-  
+
   // Add sorting indicator to current column
   const currentHeader = document.querySelector(`#myTable th[data-column="${column}"]`);
   if (currentHeader) {
@@ -404,105 +420,135 @@ function sortTable(column) {
   }
 
   // Reorder the table
-  const tableBody = document.querySelector('#myTable tbody');
-  
-  // Use document fragment for better performance
   const fragment = document.createDocumentFragment();
   sortedRows.forEach(row => fragment.appendChild(row));
-  
   tableBody.innerHTML = '';
   tableBody.appendChild(fragment);
+
+  console.log(`⛳ Sorted table ${currentSortOrder} by '${column}' column`);
 }
 
 // LOCATION AUTOCOMPLETE (PHOTON)
 function setupLocationAutocomplete() {
-  console.log("setupAutoComplete()"); 
+  console.log("setupLocationAutocomplete()");
   const input = document.getElementById('locationInput');
   const suggestionBox = document.getElementById('locationSuggestions');
 
+  if (!input || !suggestionBox) return;
+
+  // Hide suggestion box initially
+  suggestionBox.style.display = 'none';
+
   input.addEventListener('input', async (e) => {
     const query = e.target.value.trim();
-    if (query.length < 3) {
+
+    // Hide box if not enough chars
+    if (query.length < 4) {
       suggestionBox.innerHTML = '';
+      suggestionBox.style.display = 'none';
       return;
     }
+
+    // Show box when enough chars
+    suggestionBox.style.display = 'block';
 
     try {
       const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&bbox=166.5,-47.5,179.5,-34.0`);
       const data = await res.json();
 
-      suggestionBox.innerHTML = ''; // Clear suggestions
+      suggestionBox.innerHTML = '';
 
       data.features.forEach(feature => {
         const name = feature.properties.name;
         const city = feature.properties.city || '';
-        
-        // Create label without the country part
-        let fullLabel;
-        if (city && city !== name) {
-          fullLabel = `${name}, ${city}`;
-        } else {
-          fullLabel = name;
-        }
-        
+        let fullLabel = (city && city !== name) ? `${name}, ${city}` : name;
         const lat = feature.geometry.coordinates[1];
         const lng = feature.geometry.coordinates[0];
-
-        userLat = feature.geometry.coordinates[1];
-        userLong = feature.geometry.coordinates[0];   
 
         const item = document.createElement('div');
         item.textContent = fullLabel;
         item.classList.add('suggestion-item');
-        item.addEventListener('click', () => {
-          input.value = fullLabel; // Set input value to selected location
+        item.addEventListener('click', async () => {
+          input.value = fullLabel;
           suggestionBox.innerHTML = '';
-          locationIcon.innerHTML = '&#x274C;'; // Change the location icon to a clear icon ❌
-          
-          renderCourseData(mostRecentRows);//sortCoursesByDistance(lat, lng); // Sort courses by proximity to selected location
-          currentSortColumn = 'distance';
-          currentSortOrder = 'asc'; // Shortest distance at top
-          sortTable('distance');  // Sort by distance immediately after rendering
+          suggestionBox.style.display = 'none';
+
+          userLat = lat;
+          userLng = lng;
+
+          if (locationIcon) {
+            locationIcon.innerHTML = '&#x274C;';
+          }
+
+          // Fetch courses with distance from Supabase
+          courseData = await fetchCourseData(userLat, userLng);
+
+          renderCourseData(courseData);
+
+          const table = document.querySelector('#myTable');
+          if (table) {
+            table.classList.add('show-distance');
+          }
+
+          currentSortColumn = 'distance_km';
+          currentSortOrder = 'asc';
+          sortTable('distance_km');
         });
 
-        suggestionBox.appendChild(item); // Add suggestion to list
+        suggestionBox.appendChild(item);
       });
-    } catch (err) {
-      console.error('Photon autocomplete error:', err); // Handle errors
-    }
 
+      // If no suggestions, hide the box
+      if (suggestionBox.innerHTML.trim() === '') {
+        suggestionBox.style.display = 'none';
+      }
+    } catch (err) {
+      console.error('Photon autocomplete error:', err);
+      suggestionBox.innerHTML = '';
+      suggestionBox.style.display = 'none';
+    }
+  });
+
+  // Optional: Hide suggestions if input loses focus (but not if clicking a suggestion)
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      suggestionBox.style.display = 'none';
+    }, 200);
   });
 }
 
 // HANDLE LOCATION ICON INTERACTION
 function handleLocationIcon() {
   console.log("handleLocationIcon()"); 
-  if (locationIcon.innerHTML === '📍') { // Location pin clicked
+  const locationIcon = document.getElementById('locationIcon');
+  const locationInput = document.getElementById('locationInput');
+  
+  if (!locationIcon || !locationInput) return;
+  
+  if (locationIcon.innerHTML === '📍') {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           userLat = position.coords.latitude;
-          userLong = position.coords.longitude;
-          console.log(`User location detected successfully: ${userLat},${userLong}`);
+          userLng = position.coords.longitude;
+          console.log(`User location detected successfully: ${userLat},${userLng}`);
 
-          // Update the location input field
           locationInput.value = 'My Location';
+          locationIcon.innerHTML = '&#x274C;';
 
-          // Change the location icon to a clear icon
-          locationIcon.innerHTML = '&#x274C;'; // ❌
+          // Fetch courses with distance from Supabase
+          courseData = await fetchCourseData(userLat, userLng);
 
-          // Now call the dedicated handler
-          //handleLocationChange(userLat, userLong);
-          renderCourseData(mostRecentRows);
+          renderCourseData(courseData);
 
-          // Add the class to show distance column
-          document.querySelector('#myTable').classList.add('show-distance');
+          const table = document.querySelector('#myTable');
+          if (table) {
+            table.classList.add('show-distance');
+          }
 
-          // Sort by distance immediately after rendering
-          currentSortColumn = 'distance';
-          currentSortOrder = 'asc'; // Shortest distance at top
-          sortTable('distance');
-
+          currentSortColumn = 'distance_km';
+          currentSortOrder = 'asc';
+          sortTable('distance_km');
         },
         (error) => {
           console.error('Geolocation error:', error.message);
@@ -512,69 +558,30 @@ function handleLocationIcon() {
     } else {
       alert('Geolocation is not supported by your browser.');
     }
-
-  } else { // Cross (❌) clicked
-    
-    // Clear the users location
+  } else {
     userLat = null;
-    userLong = null;
-
-    // Clear the location input field
+    userLng = null;
     locationInput.value = '';
-
-    // Change the icon back to location pin
     locationIcon.innerHTML = '📍';
 
-    // Remove the class to hide distance column
-    document.querySelector('#myTable').classList.remove('show-distance');
+    const table = document.querySelector('#myTable');
+    if (table) {
+      table.classList.remove('show-distance');
+    }
 
-    renderCourseData(mostRecentRows);
+    renderCourseData(courseData);
   }
-  
-};
-
-// Sort visible courses by proximity to given lat/lng
-function sortCoursesByDistance(userLat, userLng) {
-  console.log("sortCoursesByDistance()"); 
-  const rows = Array.from(document.querySelectorAll('#myTable tbody tr'));
-  const rowsWithDistance = rows.map(row => {
-  // Find the GPS cell (typically the cell before the last one if distance is present)
-  const cells = row.querySelectorAll('td');
-  const gpsCell = cells[cells.length - 2]; // Second-to-last cell is GPS when distance is present
-
-  // Parse GPS coordinates
-  if (gpsCell && gpsCell.textContent.includes(',')) {
-    const [lat, lng] = gpsCell.textContent.trim().split(',').map(Number);
-    const distance = getDistance(userLat, userLng, lat, lng).toFixed(2);
-    return { row, distance: parseFloat(distance) };
-  }
-    
-  return { row, distance: Infinity }; // Handle rows without valid GPS data
-  });
-
-  const sortedRows = rowsWithDistance.sort((a, b) => a.distance - b.distance);
-
-  const tableBody = document.querySelector('#myTable tbody');
-  // Use document fragment for better performance
-  const fragment = document.createDocumentFragment();
-  sortedRows.forEach(item => fragment.appendChild(item.row));
-  
-  tableBody.innerHTML = '';
-  tableBody.appendChild(fragment);
 }
 
-// HAVERSINE FORMULA TO CALCULATE DISTANCE
-function getDistance(lat1, lng1, lat2, lng2) {
-  console.log("getDistance()"); 
-  const R = 6371; // Radius of Earth in km
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLng = (lng2 - lng1) * (Math.PI / 180);
+async function fetchCourseData(userLat, userLng) {
+  const { data, error } = await supabase_connection
+    .rpc('courses_with_distance', { user_lat: userLat, user_lng: userLng });
 
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in km
+  if (error) {
+    console.error('🚑 Error fetching course data:', error);
+    return [];
+  }
+  return data;
 }
+
 
