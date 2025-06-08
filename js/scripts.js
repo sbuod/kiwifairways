@@ -162,6 +162,14 @@ function renderCourseData(courses) {
       return `${day}-${month}-${year}`;
     };
 
+    // Helper to format as currency
+    function formatCurrency(value) {
+      if (value === '' || value === null || value === undefined) return '';
+      const num = Number(value);
+      if (isNaN(num) || num === 0) return '';
+      return `$${num}`;
+    }
+
     const cells = [
       course.region || '',
       course.name || '',
@@ -170,9 +178,9 @@ function renderCourseData(courses) {
       course.slope || '',
       course.length || '',
       course.par || '',
-      course.unaffiliated_gf || '',   // <-- Swap this
-      course.affiliated_gf || '',     // <-- and this
-      course.full_membership || '',
+      formatCurrency(course.affiliated_gf),      // Add $ sign
+      formatCurrency(course.unaffiliated_gf),    // Add $ sign
+      formatCurrency(course.full_membership),    // Add $ sign
       course.num_members || '',
       course.notes || '',
       course.website || '',
@@ -273,20 +281,31 @@ function filterTable() {
   
   rows.forEach(row => {
     const cells = Array.from(row.querySelectorAll('td'));
-    const rowText = cells.map(cell => cell.textContent.toLowerCase()).join(' ');
+
+    // Only include visible cells in the search text
+    // This ensures that on mobile, hidden columns are not searched
+    const rowText = cells
+      .filter(cell => getComputedStyle(cell).display !== 'none') // Only visible cells
+      .map(cell => cell.textContent.toLowerCase()) // Get text content
+      .join(' '); // Combine into a single string
+
+    // Region and holes columns are always present, so we can use their index
     const region = cells[0]?.textContent || '';
     const holes = cells[2]?.textContent || '';
 
+    // Check if the visible row text matches the search input
     const matchesSearch = rowText.includes(searchValue);
+    // Check if the row matches the selected region and holes filters
     const matchesRegion = !selectedRegion || region === selectedRegion;
     const matchesHoles = !selectedHoles || holes === selectedHoles;
 
+    // Only show the row if it matches all criteria
     const shouldShow = matchesSearch && matchesRegion && matchesHoles;
     row.style.display = shouldShow ? '' : 'none';
     if (shouldShow) visibleRowsCount++;
   });
 
-  // Update the visible row count
+  // Update the visible row count display if present
   const rowCountDisplay = document.getElementById('rowCount');
   if (rowCountDisplay) {
     rowCountDisplay.innerText = `Showing ${visibleRowsCount} of ${totalRowsCount} courses`;
