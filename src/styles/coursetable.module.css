@@ -1,0 +1,12 @@
+/* src/styles/CourseTable.module.css */
+.header th {
+  background-color: var(--header-green);
+  color: var(--white);
+  height: 65px;
+}
+
+.header th:hover {
+  background-color: var(--header-green) !important; /* Darker green on hover */
+
+}
+

@@ -3,8 +3,11 @@ import { Html, Head, Main, NextScript } from "next/document";
 export default function Document() {
   return (
     <Html lang="en">
-      <Head />
-      <body className="antialiased">
+      <Head>
+        {/* Stylesheets */}
+        <link rel="stylesheet" href="/css/styles.css" />
+      </Head>
+      <body>
         <Main />
         <NextScript />
       </body>

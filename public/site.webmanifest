@@ -1,0 +1,16 @@
+{
+  "name": "Kiwi Fairways",
+  "short_name": "Kiwi Fairways",
+  "description": "Your guide to golf in beautiful Aotearoa / New Zealand",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6EBD5",
+  "theme_color": "#22C55E",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
