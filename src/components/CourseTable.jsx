@@ -1,26 +1,52 @@
 import React, { useState, useEffect } from "react";
 import { DataTable } from 'mantine-datatable';
 import { Tooltip, Text } from '@mantine/core';
+import { IconExternalLink } from '@tabler/icons-react';
 import classes from '../styles/coursetable.module.css';
+
+const formatNumber = (value) => (value == null ? 'TBC' : value);
+const formatCurrency = (value) => (value == null ? 'TBC' : `$${value}`);
+const formatMembership = (value) => (value == null ? 'TBC' : `$${value.toLocaleString('en-NZ')}`);
+const formatLength = (value) => (value == null ? 'TBC' : value.toLocaleString('en-NZ'));
+const formatDate = (value) =>
+  value
+    ? new Date(value).toLocaleDateString('en-NZ', { day: 'numeric', month: 'long', year: 'numeric' })
+    : 'TBC';
+
+// Rough px estimates used to decide whether the table needs to scroll
+const ROW_HEIGHT = 44;
+const HEADER_HEIGHT = 62;
+const FOOTER_HEIGHT = 41;
+const CHROME_ABOVE_TABLE = 220;
 
 export default function CourseTable({courses, search, region, holes, userLocation}) {
 
   // Check if we have a valid location to show distance
   const showDistance = userLocation && userLocation.lat && userLocation.lng;
 
+  // Track viewport height so the table only scrolls when its content would
+  // actually exceed the visible space, rather than at a fixed row count
+  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
+
+  useEffect(() => {
+    const handleResize = () => setViewportHeight(window.innerHeight);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Track which column we're sorting by and in which direction
-  const [sortStatus, setSortStatus] = useState({ 
-    columnAccessor: showDistance ? 'distance_km' : 'name', 
-    direction: 'asc' 
+  const [sortStatus, setSortStatus] = useState({
+    columnAccessor: showDistance ? 'distance_km' : 'name',
+    direction: 'asc'
   });
-  
+
   // Update sort to distance when location becomes available
   useEffect(() => {
     if (showDistance && sortStatus.columnAccessor === 'name') {
       setSortStatus({ columnAccessor: 'distance_km', direction: 'asc' });
     }
   }, [showDistance]);
-  
+
   // STEP 1: FILTER THE COURSES
   // Only show courses that match the search, region, and holes filters
   const filteredCourses = courses.filter((course) => {
@@ -42,7 +68,7 @@ export default function CourseTable({courses, search, region, holes, userLocatio
       slope: course.slope || course.course_layouts?.[0]?.slope,
       length: course.length || course.course_layouts?.[0]?.length,
     };
-    
+
     // Get stats information (membership, green fees, etc.)
     const stats = {
       num_members: course.num_members || course.course_stats?.[0]?.num_members,
@@ -72,6 +98,8 @@ export default function CourseTable({courses, search, region, holes, userLocatio
     };
   });
 
+  const footerText = `Showing ${records.length} of ${courses.length} courses`;
+
   // STEP 3: DEFINE COLUMNS
   const columns = [
     {
@@ -82,7 +110,26 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      width: 200,
+      width: '16%',
+      cellsClassName: classes.courseName,
+      footer: footerText,
+      footerClassName: classes.footerCell,
+      render: (record) => (
+        <span className={classes.courseNameCell}>
+          {record.name}
+          {record.website && (
+            <a
+              href={record.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={record.website}
+              className={classes.linkIcon}
+            >
+              <IconExternalLink size={14} />
+            </a>
+          )}
+        </span>
+      ),
     },
     {
       accessor: 'region',
@@ -92,7 +139,8 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      width: 120,
+      width: '13%',
+      cellsClassName: classes.textSecondary,
     },
     {
       accessor: 'holes',
@@ -102,9 +150,11 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 80,
-      render: (record) => record.holes || '-',
+      textAlign: 'right',
+      width: '5.5%',
+      titleClassName: classes.groupRuleStart,
+      cellsClassName: classes.groupRuleStart,
+      render: (record) => formatNumber(record.holes),
     },
     {
       accessor: 'par',
@@ -114,9 +164,9 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 60,
-      render: (record) => record.par || '-',
+      textAlign: 'right',
+      width: '5%',
+      render: (record) => formatNumber(record.par),
     },
     {
       accessor: 'rating',
@@ -126,9 +176,9 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 80,
-      render: (record) => record.rating || '-',
+      textAlign: 'right',
+      width: '6.5%',
+      render: (record) => formatNumber(record.rating),
     },
     {
       accessor: 'slope',
@@ -138,9 +188,9 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 80,
-      render: (record) => record.slope || '-',
+      textAlign: 'right',
+      width: '6%',
+      render: (record) => formatNumber(record.slope),
     },
     {
       accessor: 'length',
@@ -150,9 +200,9 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 80,
-      render: (record) => record.length || '-',
+      textAlign: 'right',
+      width: '7.5%',
+      render: (record) => formatLength(record.length),
     },
     {
       accessor: 'num_members',
@@ -162,56 +212,51 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 100,
-      render: (record) => record.num_members || '-',
+      textAlign: 'right',
+      width: '7%',
+      titleClassName: `${classes.groupRuleStart} ${classes.textSecondary}`,
+      cellsClassName: `${classes.groupRuleStart} ${classes.textSecondary}`,
+      render: (record) => formatNumber(record.num_members),
     },
     {
       accessor: 'full_membership',
       title: (
         <Tooltip label={<Text fz="xs">Full Membership Cost. Each club will have various options</Text>} color="var(--table-header-hover)" withArrow>
-          <span>M'ship</span>
+          <span>Full Membership</span>
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 80,
-      render: (record) => record.full_membership ? `$${record.full_membership}` : '-',
+      textAlign: 'right',
+      width: '10%',
+      cellsClassName: classes.textSecondary,
+      render: (record) => formatMembership(record.full_membership),
     },
     {
       accessor: 'unaffiliated_gf',
       title: (
         <Tooltip label={<Text fz="xs">Green Fee (Unaffiliated)</Text>} color="var(--table-header-hover)" withArrow>
-          <span>GF</span>
+          <span>Green fee</span>
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 80,
-      render: (record) => record.unaffiliated_gf ? `$${record.unaffiliated_gf}` : '-',
+      textAlign: 'right',
+      width: '7%',
+      titleClassName: classes.groupRuleStart,
+      cellsClassName: `${classes.groupRuleStart} ${classes.feeHero}`,
+      render: (record) => formatCurrency(record.unaffiliated_gf),
     },
     {
       accessor: 'affiliated_gf',
       title: (
         <Tooltip label={<Text fz="xs">Green Fee (Affiliated)</Text>} color="var(--table-header-hover)" withArrow>
-          <span>GF (A)</span>
+          <span>Affiliated</span>
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 80,
-      render: (record) => record.affiliated_gf ? `$${record.affiliated_gf}` : '-',
-    },
-    {
-      accessor: 'website',
-      title: 'Link',
-      render: (record) => record.website ? (
-        <a href={record.website} target="_blank" rel="noopener noreferrer" title={record.website} style={{ textDecoration: 'none' }}>
-          🔗
-        </a>
-      ) : null,
-      textAlign: 'center',
-      width: 65,
+      textAlign: 'right',
+      width: '7.5%',
+      cellsClassName: classes.feeHero,
+      render: (record) => formatCurrency(record.affiliated_gf),
     },
     {
       accessor: 'date',
@@ -221,9 +266,11 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'center',
-      width: 100,
-      render: (record) => record.date ? new Date(record.date).toLocaleDateString('en-NZ') : '-',
+      textAlign: 'right',
+      width: '9%',
+      titleClassName: classes.groupRuleStart,
+      cellsClassName: `${classes.groupRuleStart} ${classes.textMuted}`,
+      render: (record) => formatDate(record.date),
     },
   ];
 
@@ -238,8 +285,9 @@ export default function CourseTable({courses, search, region, holes, userLocatio
       ),
       sortable: true,
       textAlign: 'right',
-      width: 100,
-      render: (record) => record.distance_km ? `${record.distance_km.toFixed(1)} km` : '-',
+      width: '8%',
+      cellsClassName: classes.textMuted,
+      render: (record) => record.distance_km ? `${record.distance_km.toFixed(1)} km` : 'TBC',
     });
   }
 
@@ -264,14 +312,26 @@ export default function CourseTable({courses, search, region, holes, userLocatio
     return 0;
   });
 
-  // STEP 8: RENDER THE TABLE WITH COURSE COUNT
+  // Only force a bounded, scrollable height once the content would actually
+  // exceed the visible viewport — otherwise let the table shrink to fit.
+  const estimatedContentHeight = HEADER_HEIGHT + sortedRecords.length * ROW_HEIGHT + FOOTER_HEIGHT;
+  const availableHeight = viewportHeight - CHROME_ABOVE_TABLE;
+  const tableHeight = estimatedContentHeight > availableHeight ? `${availableHeight}px` : undefined;
+
+  // STEP 8: RENDER THE TABLE
   return (
-    <div>
+    <div className={classes.tableWrapper}>
       <DataTable
-        height="calc(100vh)"
+        height={tableHeight}
         highlightOnHover
         striped
         withTableBorder
+        borderRadius={12}
+        backgroundColor="var(--ct-surface)"
+        borderColor="var(--ct-border)"
+        rowBorderColor="var(--ct-row-divider)"
+        stripedColor="var(--ct-zebra)"
+        highlightOnHoverColor="var(--ct-row-hover)"
         stickyHeader
         pinFirstColumn
         records={sortedRecords}
@@ -279,22 +339,12 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         sortStatus={sortStatus}
         onSortStatusChange={setSortStatus}
         noRecordsText="No golf courses found"
-        horizontalSpacing="md"
-        verticalSpacing="sm"
-        fontSize="sm"
+        horizontalSpacing={0}
+        verticalSpacing={0}
+        fontSize={13}
         className={showDistance ? "show-distance" : ""}
-        classNames={{ header: classes.header }}
+        classNames={{ header: classes.header, table: classes.table, footer: classes.footer }}
       />
-
-      {/* Course count display */}
-      <div style={{ 
-        marginTop: '10px', 
-        fontSize: '14px', 
-        color: '#666',
-        textAlign: 'left',
-      }}>
-        {records.length} {records.length === 1 ? 'course' : 'courses'} displayed
-      </div>
     </div>
   );
 }

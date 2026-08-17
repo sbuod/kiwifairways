@@ -1,12 +1,113 @@
 /* src/styles/CourseTable.module.css */
+
+.tableWrapper {
+  padding-bottom: 50px;
+  --ct-surface: #FDFBF4;
+  --ct-border: #E5DCC3;
+  --ct-header-bg: #5A6B2F;
+  --ct-header-text: #F6EFDD;
+  --ct-row-divider: #EFE8D4;
+  --ct-zebra: #F9F4E6;
+  --ct-row-hover: #F1E9CF;
+  --ct-text-primary: #2C2A24;
+  --ct-text-secondary: #7A7565;
+  --ct-text-muted: #8A8470;
+  --ct-accent: #B24A26;
+  --ct-accent-hover: #D85A30;
+  --ct-group-rule: rgba(90, 107, 47, 0.15);
+  --ct-link-icon: #B0A98F;
+}
+
+.table {
+  table-layout: fixed;
+  min-width: 960px;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mantine-font-family);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ct-text-primary);
+}
+
+.table td {
+  padding: 11px 10px;
+}
+
+.table td:first-child {
+  padding-left: 16px;
+}
+
+.table td:last-child {
+  padding-right: 16px;
+}
+
 .header th {
-  background-color: var(--header-green);
-  color: var(--white);
-  height: 65px;
+  background-color: var(--ct-header-bg);
+  color: var(--ct-header-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+  vertical-align: bottom;
+  padding: 10px;
+  white-space: normal;
 }
 
 .header th:hover {
-  background-color: var(--header-green) !important; /* Darker green on hover */
-
+  background-color: var(--ct-header-bg) !important;
 }
 
+/* Keep the vertical scrollbar track clear of the sticky header and footer
+   instead of running its full height through them (mantine-datatable
+   exposes the measured header/footer heights as these custom properties) */
+.tableWrapper :global(.mantine-datatable-scroll-area-scrollbar[data-orientation='vertical']) {
+  top: var(--mantine-datatable-header-height, 0);
+  bottom: calc(var(--mantine-datatable-footer-height, 0) + var(--sa-corner-width, 0));
+}
+
+.footer {
+  background-color: var(--ct-surface);
+  border-top: 1px solid var(--ct-row-divider);
+}
+
+.footerCell {
+  padding: 10px 16px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ct-text-muted);
+}
+
+.courseName {
+  font-weight: 500;
+}
+
+.courseNameCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.textSecondary {
+  color: var(--ct-text-secondary);
+}
+
+.textMuted {
+  color: var(--ct-text-muted);
+}
+
+.feeHero {
+  font-weight: 500;
+  color: var(--ct-accent);
+}
+
+.groupRuleStart {
+  border-left: 1px solid var(--ct-group-rule);
+}
+
+.linkIcon {
+  display: inline-flex;
+  color: var(--ct-link-icon);
+  transition: color 0.15s ease;
+}
+
+.linkIcon:hover {
+  color: var(--ct-accent-hover);
+}

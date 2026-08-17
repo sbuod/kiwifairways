@@ -28,7 +28,7 @@ KIWI FAIRWAYS - CSS TABLE OF CONTENTS
 
 /* ========== 2. BASE STYLES & LAYOUT ========== */
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--mantine-font-family);
   background-color: var(--background-cream);
   margin: 0;
   padding: 0;
@@ -77,6 +77,7 @@ body {
   margin-bottom: .5rem;
   background-color: var(--background-cream);
   flex-wrap: wrap;
+  --mantine-primary-color-filled: var(--header-green);
 }
 
 /* Filter bar controls */
@@ -87,7 +88,7 @@ body {
   border-radius: 5px;
   padding: 10px;
   font-size: 16px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--mantine-font-family);
   outline: none;
 }
 
@@ -140,7 +141,7 @@ body {
   font-size: 16px;
   border-radius: 5px;
   border: 1px solid var(--border-color);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--mantine-font-family);
   width: 100%;
 
 
@@ -169,7 +170,7 @@ body {
   font-size: 16px;
   border-radius: 5px;
   border: 1px solid var(--border-color);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--mantine-font-family);
   width: 400px;
   outline: none;
 }
@@ -185,7 +186,7 @@ body {
   border-radius: 5px;
   cursor: pointer;
   color: var(--white);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--mantine-font-family);
   font-size: 16px;
   width: 40px;
   height: 40px;
