@@ -32,6 +32,7 @@ body {
   background-color: var(--background-cream);
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
 }
 
 .container {

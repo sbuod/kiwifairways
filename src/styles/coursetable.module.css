@@ -111,3 +111,33 @@
 .linkIcon:hover {
   color: var(--ct-accent-hover);
 }
+
+/* Mobile only: tighter rows, single-line cells so more courses fit on
+   screen at once. Desktop keeps the wider padding/wrapping above. */
+@media (max-width: 834px) {
+  .table td {
+    padding: 5px 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .table td:first-child {
+    padding-left: 12px;
+  }
+
+  .table td:last-child {
+    padding-right: 12px;
+  }
+
+  .courseNameCell {
+    min-width: 0;
+  }
+
+  .courseNameText {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

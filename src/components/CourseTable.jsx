@@ -19,17 +19,27 @@ const HEADER_HEIGHT = 62;
 const FOOTER_HEIGHT = 41;
 const CHROME_ABOVE_TABLE = 220;
 
+// Matches the tablet breakpoint the filter bar already reflows at (styles.css)
+const MOBILE_BREAKPOINT = 834;
+
 export default function CourseTable({courses, search, region, holes, userLocation}) {
 
   // Check if we have a valid location to show distance
   const showDistance = userLocation && userLocation.lat && userLocation.lng;
 
-  // Track viewport height so the table only scrolls when its content would
-  // actually exceed the visible space, rather than at a fixed row count
-  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
+  // Track viewport size so the table only takes a bounded, internally
+  // scrolling height when its content would actually exceed the visible
+  // space AND we're on a wide-enough screen. On mobile we deliberately skip
+  // the bounded height: a large internal scroll area there captures touch
+  // scrolling meant for the page, making the header/filters above it feel
+  // "stuck" since the page itself never gets to scroll past them.
+  const [viewport, setViewport] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
 
   useEffect(() => {
-    const handleResize = () => setViewportHeight(window.innerHeight);
+    const handleResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -116,7 +126,7 @@ export default function CourseTable({courses, search, region, holes, userLocatio
       footerClassName: classes.footerCell,
       render: (record) => (
         <span className={classes.courseNameCell}>
-          {record.name}
+          <span className={classes.courseNameText}>{record.name}</span>
           {record.website && (
             <a
               href={record.website}
@@ -132,15 +142,58 @@ export default function CourseTable({courses, search, region, holes, userLocatio
       ),
     },
     {
-      accessor: 'region',
+      accessor: 'unaffiliated_gf',
       title: (
-        <Tooltip label={<Text fz="xs">Per New Zealand geography, rather than NZ Golf regions</Text>} color="var(--table-header-hover)" withArrow>
-          <span>Region</span>
+        <Tooltip label={<Text fz="xs">Green Fee (Unaffiliated)</Text>} color="var(--table-header-hover)" withArrow>
+          <span>Green fee</span>
         </Tooltip>
       ),
       sortable: true,
-      width: '13%',
+      textAlign: 'right',
+      width: '7%',
+      titleClassName: classes.groupRuleStart,
+      cellsClassName: `${classes.groupRuleStart} ${classes.feeHero}`,
+      render: (record) => formatCurrency(record.unaffiliated_gf),
+    },
+    {
+      accessor: 'affiliated_gf',
+      title: (
+        <Tooltip label={<Text fz="xs">Green Fee (Affiliated)</Text>} color="var(--table-header-hover)" withArrow>
+          <span>Affiliated</span>
+        </Tooltip>
+      ),
+      sortable: true,
+      textAlign: 'right',
+      width: '7.5%',
+      cellsClassName: classes.feeHero,
+      render: (record) => formatCurrency(record.affiliated_gf),
+    },
+    {
+      accessor: 'num_members',
+      title: (
+        <Tooltip label={<Text fz="xs">Total number of members</Text>} color="var(--table-header-hover)" withArrow>
+          <span>Members</span>
+        </Tooltip>
+      ),
+      sortable: true,
+      textAlign: 'right',
+      width: '7%',
+      titleClassName: `${classes.groupRuleStart} ${classes.textSecondary}`,
+      cellsClassName: `${classes.groupRuleStart} ${classes.textSecondary}`,
+      render: (record) => formatNumber(record.num_members),
+    },
+    {
+      accessor: 'full_membership',
+      title: (
+        <Tooltip label={<Text fz="xs">Full Membership Cost. Each club will have various options</Text>} color="var(--table-header-hover)" withArrow>
+          <span>Full Membership</span>
+        </Tooltip>
+      ),
+      sortable: true,
+      textAlign: 'right',
+      width: '10%',
       cellsClassName: classes.textSecondary,
+      render: (record) => formatMembership(record.full_membership),
     },
     {
       accessor: 'holes',
@@ -205,58 +258,15 @@ export default function CourseTable({courses, search, region, holes, userLocatio
       render: (record) => formatLength(record.length),
     },
     {
-      accessor: 'num_members',
+      accessor: 'region',
       title: (
-        <Tooltip label={<Text fz="xs">Total number of members</Text>} color="var(--table-header-hover)" withArrow>
-          <span>Members</span>
+        <Tooltip label={<Text fz="xs">Per New Zealand geography, rather than NZ Golf regions</Text>} color="var(--table-header-hover)" withArrow>
+          <span>Region</span>
         </Tooltip>
       ),
       sortable: true,
-      textAlign: 'right',
-      width: '7%',
-      titleClassName: `${classes.groupRuleStart} ${classes.textSecondary}`,
-      cellsClassName: `${classes.groupRuleStart} ${classes.textSecondary}`,
-      render: (record) => formatNumber(record.num_members),
-    },
-    {
-      accessor: 'full_membership',
-      title: (
-        <Tooltip label={<Text fz="xs">Full Membership Cost. Each club will have various options</Text>} color="var(--table-header-hover)" withArrow>
-          <span>Full Membership</span>
-        </Tooltip>
-      ),
-      sortable: true,
-      textAlign: 'right',
-      width: '10%',
+      width: '13%',
       cellsClassName: classes.textSecondary,
-      render: (record) => formatMembership(record.full_membership),
-    },
-    {
-      accessor: 'unaffiliated_gf',
-      title: (
-        <Tooltip label={<Text fz="xs">Green Fee (Unaffiliated)</Text>} color="var(--table-header-hover)" withArrow>
-          <span>Green fee</span>
-        </Tooltip>
-      ),
-      sortable: true,
-      textAlign: 'right',
-      width: '7%',
-      titleClassName: classes.groupRuleStart,
-      cellsClassName: `${classes.groupRuleStart} ${classes.feeHero}`,
-      render: (record) => formatCurrency(record.unaffiliated_gf),
-    },
-    {
-      accessor: 'affiliated_gf',
-      title: (
-        <Tooltip label={<Text fz="xs">Green Fee (Affiliated)</Text>} color="var(--table-header-hover)" withArrow>
-          <span>Affiliated</span>
-        </Tooltip>
-      ),
-      sortable: true,
-      textAlign: 'right',
-      width: '7.5%',
-      cellsClassName: classes.feeHero,
-      render: (record) => formatCurrency(record.affiliated_gf),
     },
     {
       accessor: 'date',
@@ -274,9 +284,9 @@ export default function CourseTable({courses, search, region, holes, userLocatio
     },
   ];
 
-  // Add the distance column if we have location data
+  // Add the distance column right after Course if we have location data
   if (showDistance) {
-    columns.push({
+    columns.splice(1, 0, {
       accessor: 'distance_km',
       title: (
         <Tooltip label={<Text fz="xs">Distance from the entered location</Text>} color="var(--table-header-hover)" withArrow>
@@ -313,10 +323,12 @@ export default function CourseTable({courses, search, region, holes, userLocatio
   });
 
   // Only force a bounded, scrollable height once the content would actually
-  // exceed the visible viewport — otherwise let the table shrink to fit.
+  // exceed the visible viewport, and only on wide-enough screens — otherwise
+  // let the table shrink to (or grow with) its content and scroll with the page.
   const estimatedContentHeight = HEADER_HEIGHT + sortedRecords.length * ROW_HEIGHT + FOOTER_HEIGHT;
-  const availableHeight = viewportHeight - CHROME_ABOVE_TABLE;
-  const tableHeight = estimatedContentHeight > availableHeight ? `${availableHeight}px` : undefined;
+  const availableHeight = viewport.height - CHROME_ABOVE_TABLE;
+  const isMobile = viewport.width < MOBILE_BREAKPOINT;
+  const tableHeight = !isMobile && estimatedContentHeight > availableHeight ? `${availableHeight}px` : undefined;
 
   // STEP 8: RENDER THE TABLE
   return (
