@@ -122,8 +122,12 @@ export default function CourseTable({courses, search, region, holes, userLocatio
       sortable: true,
       width: '16%',
       cellsClassName: classes.courseName,
-      footer: footerText,
-      footerClassName: classes.footerCell,
+      // mantine-datatable's internal scroll/height measurement seems to key off
+      // a footer row existing at all, independent of its content or styling —
+      // keep an invisible one here; the real, visible text renders below the
+      // table (see footerCell div below) so it isn't boxed in by the table border.
+      footer: ' ',
+      footerClassName: classes.footerSpacer,
       render: (record) => (
         <span className={classes.courseNameCell}>
           <span className={classes.courseNameText}>{record.name}</span>
@@ -355,8 +359,9 @@ export default function CourseTable({courses, search, region, holes, userLocatio
         verticalSpacing={0}
         fontSize={13}
         className={showDistance ? "show-distance" : ""}
-        classNames={{ header: classes.header, table: classes.table, footer: classes.footer }}
+        classNames={{ header: classes.header, table: classes.table, footer: classes.footerSpacer }}
       />
+      <div className={classes.footerCell}>{footerText}</div>
     </div>
   );
 }
