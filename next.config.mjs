@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  // Static export has no image optimisation server
+  images: { unoptimized: true },
   reactStrictMode: true,
   async headers() {
     return [

@@ -1,22 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Combobox, useCombobox, InputBase, ActionIcon, Loader } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
+import { IconCurrentLocation, IconX } from '@tabler/icons-react';
 
 console.log('🏌️‍♂️ LocationSearch component loaded');
-
-// Tiny inline SVG icons (no extra deps)
-const IconCurrentLocation = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <circle cx="12" cy="12" r="3" fill="currentColor" />
-    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
-  </svg>
-);
-const IconX = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
 
 function LocationSearch({ onLocationSelect }) {
   // Query text in the input
@@ -130,17 +117,18 @@ function LocationSearch({ onLocationSelect }) {
           onBlur={() => combobox.closeDropdown()}
           placeholder="Sort by location"
           radius="xl"
-          style={{ minWidth: 300 }}
+          w={{ base: '100%', sm: 380 }}
+          ml={{ sm: 'auto' }}
           rightSection={
             (searching || geoLoading) ? (
-              <Loader size="xs" color="var(--header-green)" />
+              <Loader size="xs" color="kfGreen" />
             ) : query ? (
               <ActionIcon
                 variant="subtle"
                 aria-label="Clear"
                 title="Clear"
+                color="kfGreen"
                 onClick={handleClear}
-                style={{ color: 'var(--header-green)' }}
               >
                 <IconX size={16} />
               </ActionIcon>
@@ -149,8 +137,8 @@ function LocationSearch({ onLocationSelect }) {
                 variant="subtle"
                 aria-label="Use my location"
                 title="Use my location"
+                color="kfGreen"
                 onClick={handleUseMyLocation}
-                style={{ color: 'var(--header-green)' }}
               >
                 <IconCurrentLocation size={16} />
               </ActionIcon>

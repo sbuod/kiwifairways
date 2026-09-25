@@ -1,85 +1,160 @@
 import React from "react";
-import { TextInput, Select, Group } from "@mantine/core"; // Mantine input for nicer UX
-import LocationSearch from "./LocationSearch";
+import {
+  Anchor,
+  Badge,
+  Button,
+  Group,
+  Input,
+  Pill,
+  Popover,
+  SegmentedControl,
+  Select,
+  Stack,
+  TextInput,
+} from "@mantine/core";
+import { IconFilter } from "@tabler/icons-react";
+import classes from "../styles/toolbar.module.css";
 
-console.log("🏌️‍♂️ Filters component loaded");
+const HOLES_OPTIONS = [
+  { value: "", label: "All" },
+  { value: "9", label: "9 holes" },
+  { value: "18", label: "18 holes" },
+];
+
+const countActiveFilters = ({ search, region, holes }) =>
+  (search ? 1 : 0) + (region ? 1 : 0) + (holes ? 1 : 0);
 
 function Filters({
   search,            // current search text
   region,            // selected region
-  holes,             // selected holes count
+  holes,             // selected holes count ('' | '9' | '18')
   onSearch,          // setter for search text
   onRegionChange,    // setter for region
   onHolesChange,     // setter for holes
-  onLocationSelect,  // callback when user sets/clears location
+  onClear,           // clears all three filters
   courses,           // all courses to derive options from
+  opened,            // whether the popover is open
+  onOpenedChange,    // open/close the popover
 }) {
   // Build a sorted list of unique regions from course data
-  const uniqueRegions = [
+  const regions = [
     ...new Set(courses.map((course) => course.region).filter(Boolean)),
   ].sort();
 
-  // Build a sorted list of unique hole counts from course layouts
-  const uniqueHoles = [
-    ...new Set(
-      courses
-        .map((course) => course.course_layouts?.[0]?.holes || course.holes)
-        .filter((h) => h != null)
-    ),
-  ].sort((a, b) => a - b);
-
-  // Mantine Select expects string values
-  const holesData = uniqueHoles.map((h) => ({ value: String(h), label: `${h} Holes` }));
-
-  // Mantine Select data for regions
-  const regionData = uniqueRegions.map((r) => ({ value: r, label: r }));
+  const activeCount = countActiveFilters({ search, region, holes });
 
   return (
-    <div className="filter-bar">
-
-      {/* Row 1: Region + Holes side by side */}
-      <Group grow>
-        <Select
+    <Popover
+      opened={opened}
+      onChange={onOpenedChange}
+      position="bottom-start"
+      width={300}
+      shadow="md"
+      radius="md"
+      middlewares={{ shift: true, flip: true }}
+      classNames={{ dropdown: classes.dropdown }}
+    >
+      <Popover.Target>
+        <Button
+          variant="default"
           radius="xl"
-          placeholder="Filter by region"
-          data={regionData}
-          value={region === "" ? null : region}
-          onChange={(val) => onRegionChange(val || "")}
-          clearable
-          searchable
-          //style={{ minWidth: 170 }}
-        />
+          className={classes.trigger}
+          leftSection={<IconFilter size={16} color="var(--mantine-color-kfGreen-6)" />}
+          rightSection={
+            activeCount > 0 ? (
+              <Badge circle size="sm" className={classes.countBadge}>
+                {activeCount}
+              </Badge>
+            ) : null
+          }
+          onClick={() => onOpenedChange(!opened)}
+          aria-expanded={opened}
+        >
+          Filters
+        </Button>
+      </Popover.Target>
 
-        <Select
-          radius="xl"
-          placeholder="Filter by # holes"
-          data={holesData}
-          value={holes === "" ? null : String(holes)}
-          onChange={(val) => onHolesChange(val ? Number(val) : "")}
-          clearable
-          searchable
-          //style={{ maxWidth: 160 }}
-        />
-      </Group>
+      <Popover.Dropdown>
+        <Stack gap="sm" p="md">
+          <TextInput
+            label="Course"
+            placeholder="Search by name"
+            radius="xl"
+            value={search}
+            onChange={(e) => onSearch(e.currentTarget.value)}
+            classNames={{ label: classes.fieldLabel, input: classes.input }}
+          />
 
-      {/* Row 2: Search input */}
-      <Group grow>
-        <TextInput
-          radius="xl"
-          placeholder="Filter by course"
-          value={search}
-          onChange={(e) => onSearch(e.target.value)}
-          style={{ minWidth: 300 }}
-        />
-      </Group>
+          <Select
+            label="Region"
+            data={regions}
+            clearable
+            placeholder="All regions"
+            radius="xl"
+            value={region || null}
+            onChange={(val) => onRegionChange(val || "")}
+            comboboxProps={{ withinPortal: false }}
+            classNames={{ label: classes.fieldLabel, input: classes.input }}
+          />
 
-      {/* Row 3: Location search */}
-      <Group grow>
-        <div className="location-section">
-          <LocationSearch onLocationSelect={onLocationSelect} />
-        </div>
-      </Group>
-    </div>
+          <Input.Wrapper label="Holes" classNames={{ label: classes.fieldLabel }}>
+            <SegmentedControl
+              data={HOLES_OPTIONS}
+              value={String(holes)}
+              onChange={onHolesChange}
+              radius="xl"
+              color="kfGreen"
+              fullWidth
+              classNames={{ root: classes.segmentRoot, label: classes.segmentLabel }}
+            />
+          </Input.Wrapper>
+        </Stack>
+
+        <Group justify="space-between" className={classes.panelFooter}>
+          <Button variant="subtle" color="gray" size="compact-sm" className={classes.quietAction} onClick={onClear}>
+            Clear
+          </Button>
+          <Button
+            variant="subtle"
+            color="kfGreen"
+            size="compact-sm"
+            className={classes.primaryAction}
+            onClick={() => onOpenedChange(false)}
+          >
+            Done
+          </Button>
+        </Group>
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
+
+// One removable pill per active filter, plus "Clear all". Renders nothing
+// when no filter is active.
+export function ActiveFilterPills({ search, region, holes, onSearch, onRegionChange, onHolesChange, onClear }) {
+  if (countActiveFilters({ search, region, holes }) === 0) return null;
+
+  return (
+    <Group gap={8} className={classes.pills}>
+      {search && (
+        <Pill withRemoveButton className={classes.pill} onRemove={() => onSearch("")}>
+          {`“${search}”`}
+        </Pill>
+      )}
+      {region && (
+        <Pill withRemoveButton className={classes.pill} onRemove={() => onRegionChange("")}>
+          {region}
+        </Pill>
+      )}
+      {holes && (
+        <Pill withRemoveButton className={classes.pill} onRemove={() => onHolesChange("")}>
+          {`${holes} holes`}
+        </Pill>
+      )}
+      <Anchor component="button" type="button" size="xs" className={classes.clearAll} onClick={onClear}>
+        Clear all
+      </Anchor>
+    </Group>
   );
 }
 

@@ -1,0 +1,13 @@
+/* src/styles/header.module.css */
+
+.header {
+  padding: 8px 0 4px;
+}
+
+/* 160px on desktop, scaling down to 96px on phones */
+.logo {
+  display: block;
+  width: clamp(96px, 28vw, 160px);
+  height: auto;
+  aspect-ratio: 1;
+}

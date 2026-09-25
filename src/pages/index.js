@@ -1,9 +1,17 @@
 import Head from 'next/head'
-import { useState, useEffect } from "react";
-import Filters from "../components/Filters";
-import CourseInfoTable from "../components/CourseTable";
+import { useState, useEffect, useMemo } from "react";
+import { Container, Group } from '@mantine/core';
+import { useDataTableColumns } from 'mantine-datatable';
+import Filters, { ActiveFilterPills } from "../components/Filters";
+import ColumnPicker from "../components/ColumnPicker";
+import LocationSearch from "../components/LocationSearch";
+import CourseInfoTable, { COLUMN_GROUPS, RANKING_SOURCES, getColumns } from "../components/CourseTable";
 import { Header } from '../components/Header';
 import { supabase } from "../lib/supabase";
+
+// Bump the version whenever column defaults change, so returning visitors
+// pick up the new defaults instead of their saved choice
+const COLUMNS_STORAGE_KEY = 'kf-columns-v1';
 
 export default function Home() {
   const [courses, setCourses] = useState([]);
@@ -12,6 +20,59 @@ export default function Home() {
   const [region, setRegion] = useState("");
   const [holes, setHoles] = useState("");
   const [userLocation, setUserLocation] = useState(null);
+  const [rankings, setRankings] = useState({});
+  // Which toolbar popover is open: 'filters' | 'columns' | null
+  const [openPanel, setOpenPanel] = useState(null);
+
+  const clearFilters = () => {
+    setSearch("");
+    setRegion("");
+    setHoles("");
+  };
+
+  // Opening one popover closes the other
+  const panelHandler = (name) => (open) =>
+    setOpenPanel((current) => (open ? name : current === name ? null : current));
+
+  // Column visibility (persisted to localStorage by mantine-datatable)
+  const showDistance = !!(userLocation?.lat && userLocation?.lng);
+  const columns = useMemo(() => getColumns({ showDistance }), [showDistance]);
+  const { effectiveColumns, columnsToggle, setColumnsToggle, resetColumnsToggle } = useDataTableColumns({
+    key: COLUMNS_STORAGE_KEY,
+    columns,
+  });
+
+  // Fetch rankings separately and merge by course_id, so they show for both
+  // the plain query and the courses_with_distance RPC. Only the latest
+  // edition of each source is used.
+  useEffect(() => {
+    async function fetchRankings() {
+      const { data, error } = await supabase
+        .from('course_rankings')
+        .select('course_id, source, rank, edition_year');
+
+      if (error || !data) {
+        console.log('Rankings unavailable:', error?.message);
+        return;
+      }
+
+      const latestEdition = {};
+      data.forEach(({ source, edition_year }) => {
+        latestEdition[source] = Math.max(latestEdition[source] ?? -Infinity, edition_year);
+      });
+
+      const accessorFor = Object.fromEntries(RANKING_SOURCES.map((r) => [r.source, r.accessor]));
+      const byCourse = {};
+      data.forEach(({ course_id, source, rank, edition_year }) => {
+        if (!accessorFor[source] || edition_year !== latestEdition[source]) return;
+        byCourse[course_id] = { ...byCourse[course_id], [accessorFor[source]]: rank };
+      });
+
+      setRankings(byCourse);
+    }
+
+    fetchRankings();
+  }, []);
 
   // Fetch from Supabase course_info table
   useEffect(() => {
@@ -108,35 +169,57 @@ export default function Home() {
         <meta name="twitter:image" content="https://kiwifairways.nz/images/share-image.jpg" />
         
       </Head>
-      <div className="container">
+      <Container size={1500} px={20} py={20}>
         <Header />
-        <Filters
+        <Group gap="sm" wrap="wrap" mt={24} mb={20}>
+          <Filters
+            search={search}
+            region={region}
+            holes={holes}
+            onSearch={setSearch}
+            onRegionChange={setRegion}
+            onHolesChange={setHoles}
+            onClear={clearFilters}
+            courses={courses}
+            opened={openPanel === 'filters'}
+            onOpenedChange={panelHandler('filters')}
+          />
+          <ColumnPicker
+            groups={COLUMN_GROUPS}
+            columnsToggle={columnsToggle}
+            setColumnsToggle={setColumnsToggle}
+            resetColumnsToggle={resetColumnsToggle}
+            opened={openPanel === 'columns'}
+            onOpenedChange={panelHandler('columns')}
+          />
+          <LocationSearch onLocationSelect={setUserLocation} />
+        </Group>
+        <ActiveFilterPills
           search={search}
           region={region}
           holes={holes}
           onSearch={setSearch}
           onRegionChange={setRegion}
           onHolesChange={setHoles}
-          onLocationSelect={setUserLocation}
-          courses={courses}
+          onClear={clearFilters}
         />
-        <div className="content-section">
-          {loading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p className="loading-text">Loading courses...</p>
-            </div>
-          ) : (
-            <CourseInfoTable
-              courses={courses}
-              search={search}
-              region={region}
-              holes={holes}
-              userLocation={userLocation}
-            />
-          )}
-        </div>
-      </div>
+        {loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p className="loading-text">Loading courses...</p>
+          </div>
+        ) : (
+          <CourseInfoTable
+            courses={courses}
+            rankings={rankings}
+            columns={effectiveColumns}
+            search={search}
+            region={region}
+            holes={holes}
+            userLocation={userLocation}
+          />
+        )}
+      </Container>
     </>
   );
 }

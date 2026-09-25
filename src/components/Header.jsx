@@ -1,27 +1,21 @@
 import React from 'react';
+import Image from 'next/image';
+import { Center, Tooltip } from '@mantine/core';
+import classes from '../styles/header.module.css';
 
 export const Header = () => {
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr auto 1fr',
-      alignItems: 'start',
-      padding: '20px',
-      width: '100%',
-      maxWidth: '1500px',
-      margin: '0 auto'
-    }}>
-      <div />
-
-      <div style={{ justifySelf: 'center' }}>
-        <img
+    <Center component="header" className={classes.header}>
+      <Tooltip label="Your guide to golf in beautiful Aotearoa New Zealand" withArrow>
+        <Image
           src="/images/logo.png"
-          alt="Kiwi Fairways Logo"
-          className="site-logo"
+          alt="Kiwi Fairways"
+          width={160}
+          height={160}
+          priority
+          className={classes.logo}
         />
-      </div>
-
-      <div />
-    </div>
+      </Tooltip>
+    </Center>
   );
 };

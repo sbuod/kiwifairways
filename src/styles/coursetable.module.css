@@ -10,17 +10,16 @@
   --ct-zebra: #F9F4E6;
   --ct-row-hover: #F1E9CF;
   --ct-text-primary: #2C2A24;
-  --ct-text-secondary: #7A7565;
-  --ct-text-muted: #8A8470;
-  --ct-accent: #B24A26;
+  --ct-text-faint: #B8B09A;
+  --ct-fee: #B24A26;
   --ct-accent-hover: #D85A30;
+  --ct-link: #5A6B2F;
   --ct-group-rule: rgba(90, 107, 47, 0.15);
   --ct-link-icon: #B0A98F;
 }
 
 .table {
-  table-layout: fixed;
-  min-width: 960px;
+  min-width: var(--ct-table-min-width, 960px);
   font-variant-numeric: tabular-nums;
   font-family: var(--mantine-font-family);
   font-size: 14px;
@@ -30,6 +29,7 @@
 
 .table td {
   padding: 11px 10px;
+  white-space: nowrap;
 }
 
 .table td:first-child {
@@ -48,11 +48,29 @@
   line-height: 1.25;
   vertical-align: bottom;
   padding: 10px;
-  white-space: normal;
+  white-space: nowrap;
+}
+
+.header th:first-child {
+  padding-left: 16px;
+}
+
+.header th:last-child {
+  padding-right: 16px;
 }
 
 .header th:hover {
   background-color: var(--ct-header-bg) !important;
+}
+
+/* Only the sorted column shows an arrow */
+.header :global(.mantine-datatable-header-cell-sortable-unsorted-icon) {
+  display: none;
+}
+
+.header :global(.mantine-datatable-header-cell-sortable-icon) {
+  color: var(--ct-header-text);
+  opacity: 0.8;
 }
 
 /* Keep the vertical scrollbar track clear of the sticky header and footer
@@ -65,7 +83,7 @@
 
 /* Invisible footer row kept only so mantine-datatable's internal scroll
    measurement has a footer to observe — the real, visible text is the
-   .footerCell div below, outside the table's own border/background. */
+   footer Group below, outside the table's own border/background. */
 .footerSpacer {
   visibility: hidden;
   padding: 0;
@@ -73,14 +91,6 @@
   font-size: 1px;
   line-height: 0;
   border-top: none !important;
-}
-
-.footerCell {
-  margin-top: 10px;
-  padding: 0 16px;
-  font-size: 12.5px;
-  font-weight: 400;
-  color: var(--ct-text-muted);
 }
 
 /* Disable mantine-datatable's built-in "more content this way" edge shadows —
@@ -94,6 +104,7 @@
 }
 
 .courseName {
+  min-width: clamp(150px, 40vw, 220px);
   font-weight: 500;
 }
 
@@ -103,17 +114,15 @@
   gap: 6px;
 }
 
-.textSecondary {
-  color: var(--ct-text-secondary);
-}
-
-.textMuted {
-  color: var(--ct-text-muted);
-}
-
-.feeHero {
+.fee {
   font-weight: 500;
-  color: var(--ct-accent);
+  color: var(--ct-fee);
+}
+
+/* TBC / – placeholders */
+.missing {
+  font-weight: 400;
+  color: var(--ct-text-faint);
 }
 
 .groupRuleStart {
@@ -130,14 +139,20 @@
   color: var(--ct-accent-hover);
 }
 
-/* Mobile only: tighter rows, single-line cells so more courses fit on
-   screen at once. Desktop keeps the wider padding/wrapping above. */
+.creditLink {
+  color: var(--ct-link);
+  font-weight: 500;
+}
+
+.creditLink:hover {
+  color: var(--ct-accent-hover);
+}
+
+/* Mobile only: tighter rows so more courses fit on screen at once, and long
+   course names truncate instead of widening the pinned column. */
 @media (max-width: 834px) {
   .table td {
     padding: 5px 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .table td:first-child {
@@ -148,12 +163,17 @@
     padding-right: 12px;
   }
 
+  .table td.courseName {
+    max-width: clamp(150px, 40vw, 220px);
+    overflow: hidden;
+  }
+
   .courseNameCell {
+    display: flex;
     min-width: 0;
   }
 
   .courseNameText {
-    flex: 1;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;

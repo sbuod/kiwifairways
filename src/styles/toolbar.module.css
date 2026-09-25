@@ -1,0 +1,150 @@
+/* src/styles/toolbar.module.css — Filters / Columns / Location toolbar */
+
+/* Filters / Columns trigger buttons */
+.trigger {
+  color: #2C2A24;
+  font-weight: 400;
+}
+
+.trigger:hover {
+  background-color: var(--mantine-color-white);
+  border-color: #5A6B2F;
+}
+
+.countBadge {
+  color: #F6EFDD;
+  font-weight: 500;
+  /* grow past a circle for two-digit counts */
+  width: auto;
+  min-width: var(--badge-height);
+  padding-inline: 5px;
+}
+
+/* Popover panels */
+.dropdown {
+  padding: 0;
+  max-width: calc(100vw - 32px);
+  background-color: #FDFBF4;
+  border: 1px solid #E5DCC3;
+  box-shadow: 0 12px 32px -8px rgba(44, 42, 36, 0.22);
+  /* no overflow: hidden — the Region Select renders its dropdown inside */
+}
+
+.panelFooter {
+  padding: 10px 16px;
+  border-top: 1px solid #E5DCC3;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #7A7565;
+  margin-bottom: 6px;
+}
+
+.input:focus,
+.input:focus-within {
+  border-color: #5B6E2C;
+}
+
+/* Holes segmented control: white track, green active pill */
+.segmentRoot {
+  background-color: var(--mantine-color-white);
+  border: 1px solid #ced4da;
+}
+
+.segmentLabel {
+  color: #2C2A24;
+}
+
+.segmentLabel[data-active] {
+  color: #F6EFDD;
+}
+
+.segmentLabel[data-active]:hover {
+  color: #F6EFDD;
+}
+
+/* Subtle footer actions */
+.quietAction {
+  color: #7A7565;
+}
+
+.quietAction:hover {
+  color: #2C2A24;
+  background-color: transparent;
+}
+
+.primaryAction:hover {
+  color: #D85A30;
+  background-color: transparent;
+}
+
+/* Active filter pills */
+.pills {
+  margin: -8px 0 12px;
+  padding-left: 4px;
+}
+
+.pill {
+  background-color: #FDFBF4;
+  border: 1px solid #E5DCC3;
+  color: #2C2A24;
+}
+
+.clearAll {
+  color: #5A6B2F;
+  font-weight: 500;
+}
+
+.clearAll:hover {
+  color: #D85A30;
+}
+
+/* Column picker */
+.pickerHeading {
+  padding: 12px 16px 6px;
+}
+
+.groupRow {
+  padding-left: 16px;
+}
+
+.groupRow:hover,
+.columnRow:hover {
+  background-color: #F1E9CF;
+}
+
+.groupCheckbox {
+  flex: 1;
+  padding: 9px 0;
+}
+
+.groupLabel {
+  font-weight: 500;
+  color: #2C2A24;
+  cursor: pointer;
+}
+
+.columnRow {
+  padding: 7px 16px;
+}
+
+.columnLabel {
+  color: #2C2A24;
+  cursor: pointer;
+}
+
+.chevron {
+  color: #7A7565;
+  transition: transform 150ms ease;
+}
+
+.chevron:hover {
+  color: #2C2A24;
+  background-color: transparent;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
