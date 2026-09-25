@@ -4,10 +4,7 @@ import { ibmPlexSans } from "../lib/fonts";
 export default function Document() {
   return (
     <Html lang="en" className={ibmPlexSans.variable}>
-      <Head>
-        {/* Stylesheets */}
-        <link rel="stylesheet" href="/css/styles.css" />
-      </Head>
+      <Head />
       <body>
         <Main />
         <NextScript />
