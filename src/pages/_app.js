@@ -1,4 +1,4 @@
-console.log('⛳ On the tee - kiwiwfairways.co.nz');
+console.log('⛳ On the tee - kiwifairways.co.nz');
 
 import '@mantine/core/styles.css';
 import 'mantine-datatable/styles.css';
