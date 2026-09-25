@@ -145,7 +145,7 @@ export default function Home() {
         <meta name="description" content="Discover golf courses across New Zealand. Compare green fees, membership costs, course info and more with Kiwi Fairways." />
         <meta name="robots" content="index, follow" />
         <meta name="google-site-verification" content="G0XKtNBfO_ZBQuZAXhG8_DZmOJbRo0H-MUHhtEES1fo" />
-        <link rel="canonical" href="https://kiwifairways.nz" />
+        <link rel="canonical" href="https://kiwifairways.co.nz" />
 
         {/* Favicons */}
         <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -158,15 +158,15 @@ export default function Home() {
         {/* Open Graph */}
         <meta property="og:title" content="Kiwi Fairways | Your guide to golf in New Zealand" />
         <meta property="og:description" content="Discover and compare golf courses, green fees and membership options across Aotearoa." />
-        <meta property="og:url" content="https://kiwifairways.nz" />
+        <meta property="og:url" content="https://kiwifairways.co.nz" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://kiwifairways.nz/images/share-image.jpg" />
+        <meta property="og:image" content="https://kiwifairways.co.nz/images/share-image.jpg" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Kiwi Fairways" />
         <meta name="twitter:description" content="Your ultimate golf course guide for New Zealand." />
-        <meta name="twitter:image" content="https://kiwifairways.nz/images/share-image.jpg" />
+        <meta name="twitter:image" content="https://kiwifairways.co.nz/images/share-image.jpg" />
         
       </Head>
       <Container size={1500} px={20} py={20}>
